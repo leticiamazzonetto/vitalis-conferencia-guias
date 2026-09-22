@@ -5,10 +5,13 @@ UMA lógica só: este site chama servico.py (consultar_regra / verificar_guia), 
 duas funções que o MCP expõe e que a Skill usa. Nenhuma regra é reescrita aqui.
 
 Páginas:
-  Painel            números do lote, prazos de envio que vencem, tabela com filtros, detalhe da guia
-  Conferir guia     formulário, texto colado ou CSV -> decisão + motivos + o que fazer (gravada)
-  Relatório de terça
-  Regras dos convênios
+  Painel               números do lote, tabela com filtros, detalhe da guia
+  Lista de correções   o que cada unidade faz no sistema de gestão, guia por guia
+  Conferir guia        formulário, texto colado ou CSV -> decisão + por quê + o que fazer (gravada)
+  Relatório semanal    com filtro por semana; cada ação abre a lista de correções filtrada
+  Regras dos convênios o que cada convênio exige e cobre
+  MCP                  conectar um assistente de IA e usar no dia a dia
+  Documentos           Skill, regras, modelo de CSV, instrução da IA, README
 
 Robustez: guia quebrada nunca derruba o site (vira CORRIGIR "dado inválido"); exceção
 inesperada vira aviso, não stack trace.

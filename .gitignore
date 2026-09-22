@@ -43,3 +43,5 @@ docs/DIARIO.md
 docs/PERGUNTAS.md
 docs/ARQUITETURA-plano.md
 docs/MAPA-TECNICO.md
+pyproject.toml
+dados/dicionario.html

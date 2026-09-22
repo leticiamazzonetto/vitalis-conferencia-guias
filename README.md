@@ -36,6 +36,8 @@ A correção acontece **no sistema de gestão** (que não vai ser trocado). A fe
 - **Conferir guia**: formulário, texto colado como a recepção escreve, ou CSV. A guia nova é comparada com o lote e com o histórico (cópia) e fica gravada em SQLite.
 - **Relatório semanal**: o quadro da semana, decisões, problemas por tipo, por unidade e por convênio, com filtro por semana; cada ação do "Top 3" abre a lista de correções já filtrada.
 - **Regras dos convênios**: o que cada convênio exige e cobre, direto do arquivo de regras.
+- **MCP**: como conectar um assistente de IA (Claude, ChatGPT, Codex e outros) e usar no dia a dia, com a Skill e o `llms.md` para baixar.
+- **Documentos**: a Skill, as regras, o modelo de CSV para conferir em lote, a instrução que a IA recebe e este README.
 
 ## Números do lote de agosto (80 guias, IA ligada)
 
@@ -47,7 +49,7 @@ A correção acontece **no sistema de gestão** (que não vai ser trocado). A fe
 
 Problemas por tipo: 12 autorização vencida · 7 campo obrigatório faltando · 6 sessão acima do limite · 5 procedimento não coberto · 2 cópia de outra guia · 1 autorização nova a lançar · 1 autorização verbal a regularizar · 1 código do procedimento errado · 1 paciente optou por particular.
 
-Relatório gerado pela ferramenta: `docs/relatorio-terca.md` (e a página "Relatório semanal" do site).
+Relatório gerado pela ferramenta: `docs/relatorio-semanal.md` (e a página "Relatório semanal" do site).
 
 ## MCP
 
@@ -122,7 +124,7 @@ A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram 
 ```bash
 python -m unittest discover -s tests     # 78 testes: regras, sinais da IA (dublê), gabarito das 80, MCP stdio
 python verificar_lote.py [--com-ia]      # lote de agosto; --com-ia lê as observações com o Haiku
-python gerar_relatorio.py                # docs/relatorio-terca.md e .html
+python gerar_relatorio.py                # docs/relatorio-semanal.md e .html
 ```
 Além dos testes: guia colada com data invertida, vírgula e observação de protocolo verbal pelo site público; cópia exata da G-0059 digitada como guia nova (tem de dar NÃO ENVIAR); reinício do serviço com o histórico preservado; MCP chamado por HTTPS de fora do servidor.
 
@@ -141,10 +143,9 @@ Além dos testes: guia colada com data invertida, vírgula e observação de pro
 ```bash
 python -m venv .venv && .venv/Scripts/activate      # Windows; no Linux: source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env                                  # opcional: ANTHROPIC_API_KEY= para ligar a IA
 streamlit run app/app.py
 ```
-Sem chave, o site roda com a IA desligada: observações vão para leitura humana.
+Para ligar a IA, defina a variável de ambiente `ANTHROPIC_API_KEY` antes de rodar (Windows: `set ANTHROPIC_API_KEY=...`; Linux/macOS: `export ANTHROPIC_API_KEY=...`). Sem ela, o site roda com a IA desligada: observações vão para leitura humana. O arquivo `.env.example` só documenta o nome da variável; na VPS ela fica em `/etc/vitalis/env`.
 
 ## Publicar na VPS
 
@@ -159,12 +160,14 @@ motor.py              as regras; OK / CORRIGIR / NÃO ENVIAR
 servico.py            fonte única: consultar_regra + verificar_guia
 verificar_lote.py     lote das 80 + resumo
 gerar_relatorio.py    relatório semanal (md + html)
-app/app.py            site (Streamlit)  ·  app/armazenamento.py  histórico (SQLite)
+app/app.py            site (Streamlit)  ·  app/armazenamento.py  histórico (SQLite)  ·  app/.streamlit/config.toml  tema
 mcp_server/server.py  MCP (stdio + HTTP)
 .claude/skills/conferir-guia/SKILL.md   Skill
 .mcp.json             registro do MCP (formato usado pelo Claude Code e outros clientes)
-prompts/observacao.md prompt de extração da IA
-tests/                78 testes + gabarito independente
-dados/                guias.csv, regras_convenio.json, dicionario.html (fictícios, da prova)
-deploy/               systemd + Caddy + instalar.sh
+prompts/observacao.md instrução que a IA recebe  ·  prompts/construcao.md  prompts usados na construção
+tests/                78 testes + gabarito.csv gerado por gerar_gabarito.py (não importa o motor)
+dados/                guias.csv (80 guias de agosto) e regras_convenio.json (fictícios, da prova)
+docs/                 llms.md (texto para assistentes), modelo-guias.csv, relatorio-semanal.md/.html
+deploy/               vitalis.service, vitalis-mcp.service, Caddyfile.bloco, instalar.sh
+requirements.txt      dependências  ·  .env.example  nome da variável da chave
 ```

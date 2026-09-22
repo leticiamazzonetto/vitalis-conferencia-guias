@@ -9,7 +9,7 @@ O prompt de produção (o único que roda em runtime) é `prompts/observacao.md`
 Resultado: plano v1 (FastAPI + Supabase + Vercel), depois descartado.
 
 ## 2. Avaliação externa da arquitetura (20/09)
-> "Seja MUITO criterioso quanto essas alegações [Streamlit + Hugging Face vs Vercel + Supabase] pois eu quero, nessa entrevista, ser coerente e entregar realmente o que vai ser melhor, não apenas em estrutura, mas também em custo. Chame [um avaliador] para uma dupla avaliação externa para chegarmos na MELHOR solução. E não na mais fácil OU na mais difícil."
+> "Seja MUITO criterioso quanto essas alegações [Streamlit vs Vercel + Supabase] pois eu quero, nessa entrevista, ser coerente e entregar realmente o que vai ser melhor, não apenas em estrutura, mas também em custo. Chame [um avaliador] para uma dupla avaliação externa para chegarmos na MELHOR solução. E não na mais fácil OU na mais difícil."
 
 Brief entregue ao avaliador independente: comparar duas propostas, rodar os testes, julgar cada alegação, recomendar UMA arquitetura com custo em R$/mês, risco de o link cair no dia da entrevista e o que uma consultora não-dev consegue explicar em 2 minutos. Resultado: núcleo Python + Streamlit no meu servidor, três estados, IA dentro do link, prazo até a data da conferência.
 

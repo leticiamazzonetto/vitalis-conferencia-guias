@@ -5,8 +5,8 @@ Este script NÃO importa motor.py. Ele reescreve as regras do convênio do zero,
 mais simples possível, para servir de segunda opinião. Se o motor e este script
 discordarem em alguma guia, um dos dois está errado e o teste acusa.
 
-O gabarito gerado foi revisado à mão pela candidata (coluna `revisado`), guia a guia,
-contra a tabela de erros do plano. Rode uma vez e commite o CSV:
+O CSV gerado tem a coluna `revisado` para a conferência manual, guia a guia. Rode uma vez
+e commite o CSV:
 
     python tests/gerar_gabarito.py
 """

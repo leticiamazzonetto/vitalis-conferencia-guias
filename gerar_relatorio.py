@@ -1,5 +1,5 @@
 """
-gerar_relatorio.py — Gera o "relatório de terça" do Dr. Renato a partir do resultados.json.
+gerar_relatorio.py — Gera o relatório semanal do Dr. Renato a partir do resultados.json.
 
 Ordem do relatório (a ordem em que o dono precisa ler):
   1. O que morre esta semana (urgentes: a ≤ 7 dias do prazo de envio)
@@ -10,7 +10,7 @@ Ordem do relatório (a ordem em que o dono precisa ler):
 Uma página, linguagem de dono de clínica, número antes de adjetivo. Só stdlib.
 
 Uso:
-    python gerar_relatorio.py --entrada resultados.json --md relatorio-terca.md --html relatorio-terca.html
+    python gerar_relatorio.py            # escreve docs/relatorio-semanal.md e .html
 """
 
 import argparse
@@ -191,8 +191,8 @@ def main():
     base = os.path.dirname(os.path.abspath(__file__))
     p = argparse.ArgumentParser()
     p.add_argument("--entrada", default=os.path.join(base, "resultados.json"))
-    p.add_argument("--md", default=os.path.join(base, "docs", "relatorio-terca.md"))
-    p.add_argument("--html", default=os.path.join(base, "docs", "relatorio-terca.html"))
+    p.add_argument("--md", default=os.path.join(base, "docs", "relatorio-semanal.md"))
+    p.add_argument("--html", default=os.path.join(base, "docs", "relatorio-semanal.html"))
     args = p.parse_args()
     with open(args.entrada, encoding="utf-8") as f:
         resumo = json.load(f)["resumo"]
