@@ -30,7 +30,7 @@ ACAO_POR_TIPO = {
     "observação da recepção requer leitura":
         "Ler as {n} observações da recepção e decidir a exceção.",
     "observação não lida pela IA":
-        "Ler à mão as {n} observações que a IA não conseguiu ler.",
+        "Ler à mão as {n} observações que a IA não leu (IA fora do ar no momento), ou conferir de novo quando ela voltar.",
     "autorização nova a lançar":
         "Lançar o número da autorização nova em {n} guias (a recepção já tem em mãos).",
     "autorização verbal a regularizar":

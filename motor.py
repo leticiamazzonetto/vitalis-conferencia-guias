@@ -361,8 +361,8 @@ def verificar(guia, regras, data_ref=None, ids_duplicata=None, sinais=None, guia
     if obs:
         if sinais.get("nao_lida"):
             reprovar(TIPO_OBSERVACAO_NAO_LIDA,
-                     f"a IA não conseguiu ler a observação: \"{obs}\"",
-                     "ler a observação à mão e decidir a exceção")
+                     f"observação não lida pela IA (IA fora do ar no momento): \"{obs}\"",
+                     "leitura humana da observação, ou conferir de novo quando a IA voltar")
         elif not sinais and not observacao_trivial(obs):
             reprovar(TIPO_OBSERVACAO,
                      f"observação da recepção requer leitura: \"{obs}\"",

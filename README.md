@@ -93,7 +93,7 @@ Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por 
 |---|---|---|
 | Linguagem | Python 3, biblioteca padrão no núcleo | Uma regra é uma linha legível. Sem framework para explicar. |
 | Regras | `regras_convenio.json` é a fonte de verdade | Convênio novo = bloco novo no JSON, zero código. O limite de sessões digitado na guia só gera alerta se divergir. |
-| IA | Claude Haiku 4.5 via API, só na observação da recepção | Custa centavos (9 chamadas para 80 guias, com cache por texto). A IA marca caixinhas; a regra decide. Se a IA cair, a guia vai para leitura humana. |
+| IA | Claude Haiku 4.5 via API, só na observação da recepção | Custa centavos (9 chamadas para 80 guias, com cache por texto). A IA marca caixinhas; a regra decide. Se a IA ficar indisponível (API fora do ar, chave inválida, sem crédito), a guia com observação não fica sem decisão: vai para CORRIGIR com o aviso "observação não lida pela IA (IA fora do ar no momento)", para leitura humana ou nova conferência quando a IA voltar. |
 | Site | Streamlit | Um arquivo, lido de cima para baixo. |
 | Histórico | SQLite em arquivo | 900 guias/mês não pedem banco gerenciado. Trocar por Postgres é uma classe (`app/armazenamento.py`). |
 | Hospedagem | Meu servidor (VPS) com Caddy e systemd | A hospedagem gratuita do Streamlit (Streamlit Community Cloud, a alternativa considerada) coloca o app para dormir depois de algumas horas sem visita: quem abre o link vê uma tela de "acordar o app" e espera, e o que o app gravou em disco (o histórico de guias) some no reinício. No meu servidor o site fica ligado e o histórico persiste. A chave da IA fica em `/etc/vitalis/env`, fora do repositório. |
@@ -105,7 +105,7 @@ Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por 
 A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram o que a IA tinha proposto:
 
 1. **Três estados, não dois.** A primeira versão tinha só OK e PENDENTE, e somava como "recuperável" R$ 550 de procedimentos que o convênio nunca vai pagar e R$ 160 de cópias. "Não enviar" é nomeado pela ação da clínica: faturar particular ou descartar. Não chamei de "recusar", porque isso seria prever o convênio sem fonte.
-2. **A IA não decide.** Ela só transforma o bilhete da recepção em sinais (`autorizacao_nova`, `protocolo_verbal`, `faturar_particular`...). Quem decide é `motor.py`, com teste. Temperatura zero, JSON fechado, cache, e falha vira "observação não lida" em vez de erro.
+2. **A IA não decide.** Ela só transforma o bilhete da recepção em sinais (`autorizacao_nova`, `protocolo_verbal`, `faturar_particular`...). Quem decide é `motor.py`, com teste. Temperatura zero, JSON fechado, cache, e falha da IA vira "observação não lida pela IA" para leitura humana, em vez de erro.
 3. **Prazo de envio contado do atendimento até a data da conferência.** A fórmula original (lançamento − atendimento) nunca disparava. Seguindo o esclarecimento do Asafe (Expert Integrado), o lote de agosto é conferido na data de lançamento de cada guia; guia nova é conferida hoje.
 4. **Cópia de guia: uma vale, a outra não.** A original ganha aviso; a cópia vira NÃO ENVIAR com valor zero. Antes contava R$ 160 de risco que não existia.
 5. **Gabarito escrito fora do motor.** O teste das 80 guias compara o motor com `tests/gabarito.csv`, gerado por `tests/gerar_gabarito.py`, que reescreve as regras do zero sem importar o motor. Se os dois discordarem, o teste acusa.
