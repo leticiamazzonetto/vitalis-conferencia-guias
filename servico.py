@@ -15,7 +15,7 @@ import json
 import os
 from datetime import date
 
-from normalizador import normalizar_guia
+from normalizador import normalizar_guia, chave_valida
 from motor import verificar
 import observacao as obs_mod
 
@@ -78,8 +78,34 @@ def consultar_regra(convenio, procedimento_codigo=None, regras=None):
     return saida
 
 
+def duplicatas_de(campos, decisoes_lote, ids_historico_fn=None):
+    """
+    Decide com quem a guia deve ser comparada e se ela é "nova".
+
+      - Se o id já existe no lote, é a PRÓPRIA guia sendo reconferida: compara só com as
+        outras do lote de mesma chave (a original é a de id menor) e ignora o histórico.
+      - Se o id não existe no lote, é guia nova: qualquer igual no lote ou no histórico
+        faz dela a cópia.
+    Devolve (ids_duplicata, guia_nova). Chave só vale com carteirinha + data preenchidas.
+    """
+    guia = normalizar_guia(campos if isinstance(campos, dict) else {})
+    chave = list(guia.get("_chave_dup", ()))
+    meu_id = (guia.get("id_guia") or "").strip()
+    if not chave_valida(chave):
+        return [], True
+    ids_lote = {d.get("id_guia") for d in decisoes_lote}
+    iguais_lote = [d["id_guia"] for d in decisoes_lote
+                   if d.get("chave_duplicata") == chave and d["id_guia"] != meu_id]
+    if meu_id in ids_lote:
+        return iguais_lote, False
+    ids = list(iguais_lote)
+    if ids_historico_fn is not None:
+        ids += [i for i in ids_historico_fn(chave, meu_id) if i not in ids]
+    return ids, True
+
+
 def verificar_guia(campos, data_ref=None, ids_duplicata=None, usar_ia=True,
-                   regras=None, cache=None, chamar=None):
+                   regras=None, cache=None, chamar=None, guia_nova=True):
     """
     Confere UMA guia como a recepção lançou. Devolve a Decisao do motor mais o registro
     normalizado (para o site mostrar as normalizações aplicadas).
@@ -87,8 +113,9 @@ def verificar_guia(campos, data_ref=None, ids_duplicata=None, usar_ia=True,
       campos        : dict com os campos da guia (texto cru; aceita dd/mm e vírgula)
       data_ref      : data ISO da conferência. Padrão: a data de lançamento da guia; sem
                       ela, a data de hoje (guia nova conferida agora).
-      ids_duplicata : ids de guias JÁ conferidas com a mesma chave (o chamador consulta o
-                      lote/histórico). Se houver, esta guia é a cópia e vira NÃO ENVIAR.
+      ids_duplicata : ids de guias com a mesma chave (use duplicatas_de para obter).
+      guia_nova     : True = se houver igual, esta é a cópia; False = a original é a de id
+                      menor (reconferência de uma guia que já está no lote).
       usar_ia       : False = não lê a observação (modo sem IA; vira "requer leitura")
       cache/chamar  : repassados a observacao.extrair_sinais (testes)
     """
@@ -106,7 +133,7 @@ def verificar_guia(campos, data_ref=None, ids_duplicata=None, usar_ia=True,
         sinais = obs_mod.extrair_sinais(guia["observacao_recepcao"], **kw)
 
     decisao = verificar(guia, regras, data_ref=data_ref, ids_duplicata=ids_duplicata,
-                        sinais=sinais, guia_nova=True)
+                        sinais=sinais, guia_nova=guia_nova)
     decisao["sinais"] = sinais
     decisao["normalizacoes"] = guia.get("_notas", [])
     decisao["chave_duplicata"] = list(guia.get("_chave_dup", ()))

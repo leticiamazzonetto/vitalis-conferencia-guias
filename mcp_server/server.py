@@ -33,9 +33,8 @@ from mcp.server.mcpserver import MCPServer  # noqa: E402  (SDK mcp 2.x)
 
 import observacao as obs_mod  # noqa: E402
 from servico import consultar_regra as _consultar_regra  # noqa: E402
-from servico import verificar_guia as _verificar_guia  # noqa: E402
+from servico import verificar_guia as _verificar_guia, duplicatas_de  # noqa: E402
 from verificar_lote import processar_lote  # noqa: E402
-from normalizador import normalizar_guia, chave_valida  # noqa: E402
 
 CSV = os.path.join(RAIZ, "dados", "guias.csv")
 REGRAS = os.path.join(RAIZ, "dados", "regras_convenio.json")
@@ -89,11 +88,8 @@ def verificar_guia(guia: dict) -> dict:
         if not isinstance(guia, dict):
             return {"ok": False, "erro": "guia precisa ser um objeto com os campos da guia"}
         decisoes, _ = _lote()
-        chave = list(normalizar_guia(guia).get("_chave_dup", ()))
-        meu_id = (guia.get("id_guia") or "").strip()
-        ids_dup = [d["id_guia"] for d in decisoes
-                   if chave_valida(chave) and d.get("chave_duplicata") == chave and d["id_guia"] != meu_id]
-        d = _verificar_guia(guia, ids_duplicata=ids_dup, usar_ia=obs_mod.ia_disponivel())
+        ids_dup, nova = duplicatas_de(guia, decisoes)
+        d = _verificar_guia(guia, ids_duplicata=ids_dup, usar_ia=obs_mod.ia_disponivel(), guia_nova=nova)
         d["ok"] = True
         return d
     except Exception as exc:  # noqa: BLE001

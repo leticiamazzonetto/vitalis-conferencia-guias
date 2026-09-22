@@ -37,8 +37,7 @@ for p in (RAIZ, BASE_APP):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from servico import verificar_guia, consultar_regra, carregar_regras  # noqa: E402
-from normalizador import chave_valida  # noqa: E402
+from servico import verificar_guia, consultar_regra, carregar_regras, duplicatas_de  # noqa: E402
 from verificar_lote import processar_lote, resumir  # noqa: E402
 from datetime import date, timedelta  # noqa: E402
 from gerar_relatorio import montar_texto  # noqa: E402
@@ -193,15 +192,11 @@ def texto_para_campos(texto):
 # ---------------------------------------------------------------------------
 def conferir_e_gravar(campos, origem):
     decisoes_lote, _ = carregar_lote(DATA_REF, IA_LIGADA)
-    previa = verificar_guia(campos, usar_ia=False)   # só para a chave de duplicata
-    chave = previa["chave_duplicata"]
-    meu_id = (campos.get("id_guia") or "").strip()
-    ids_dup = []
-    if chave_valida(chave):   # só carteirinha + data preenchidas identificam alguém
-        ids_dup = [d["id_guia"] for d in decisoes_lote
-                   if d.get("chave_duplicata") == chave and d["id_guia"] != meu_id]
-        ids_dup += [i for i in storage().ids_com_chave(chave, excluir_id=meu_id) if i not in ids_dup]
-    decisao = verificar_guia(campos, data_ref=DATA_REF, ids_duplicata=ids_dup, usar_ia=IA_LIGADA)
+    # Guia com id que já está no lote = a própria guia reconferida (não é cópia de si mesma).
+    ids_dup, nova = duplicatas_de(campos, decisoes_lote,
+                                  ids_historico_fn=lambda chave, meu_id: storage().ids_com_chave(chave, excluir_id=meu_id))
+    decisao = verificar_guia(campos, data_ref=DATA_REF, ids_duplicata=ids_dup, usar_ia=IA_LIGADA,
+                             guia_nova=nova)
     try:
         storage().salvar_resultado(decisao, origem=origem)
         decisao["_gravou"] = True
@@ -548,7 +543,15 @@ elif pagina == "Conferir guia":
                     conteudo = arq.getvalue().decode("utf-8-sig", errors="replace")
                     linhas_csv = [l for l in csv.DictReader(io.StringIO(conteudo)) if any((v or "").strip() for v in l.values())]
                     resultados = [conferir_e_gravar(l, "csv") for l in linhas_csv]
-                    st.write(f"**{len(resultados)}** guias conferidas e gravadas.")
+                    n_ok = sum(1 for d in resultados if d["decisao"] == OK)
+                    n_co = sum(1 for d in resultados if d["decisao"] == CORRIGIR)
+                    n_ne = sum(1 for d in resultados if d["decisao"] == NAO_ENVIAR)
+                    st.markdown("**Resultado deste envio**")
+                    st.markdown('<div class="kpis">' + kpi("Guias no arquivo", len(resultados))
+                                + kpi("OK", n_ok, moeda(sum(d.get("valor", 0.0) for d in resultados if d["decisao"] == OK)), "ok")
+                                + kpi("Corrigir", n_co, moeda(sum(d["valor_em_risco"] for d in resultados)), "corr")
+                                + kpi("Não enviar", n_ne, moeda(sum(d["valor_reclassificar"] for d in resultados)), "nao")
+                                + "</div>", unsafe_allow_html=True)
                     st.dataframe(pd.DataFrame([{
                         "Guia": d["id_guia"], "Convênio": d["convenio"], "Decisão": d["decisao"],
                         "Por quê": " | ".join(d["motivos"]) or "", "O que fazer": " | ".join(d["correcoes"]) or "",
@@ -557,6 +560,8 @@ elif pagina == "Conferir guia":
                     bloco_erro_amigavel(exc)
 
         st.markdown("## Histórico de guias conferidas neste site")
+        st.markdown("<p class='muted'>Acumulado de todas as conferências feitas por aqui (formulário, texto e CSV), "
+                    "inclusive testes. Não é o resultado do último envio.</p>", unsafe_allow_html=True)
         try:
             rh = storage().resumo()
             st.markdown('<div class="kpis">' + kpi("Gravadas", rh["total"]) + kpi("OK", rh["ok"], "", "ok")
@@ -572,6 +577,12 @@ elif pagina == "Conferir guia":
                 } for x in regs]), use_container_width=True, hide_index=True)
             else:
                 st.info("Nenhuma guia conferida ainda por este site.")
+            with st.expander("Limpar o histórico (apaga só as conferências deste site; o lote de agosto não muda)"):
+                confirmar = st.checkbox("Confirmo que quero apagar todo o histórico", key="confirma_limpar")
+                if st.button("Apagar histórico", disabled=not confirmar):
+                    n = storage().apagar_tudo()
+                    st.success(f"{n} conferências apagadas.")
+                    st.rerun()
         except Exception as exc:  # noqa: BLE001
             bloco_erro_amigavel(exc)
     except Exception as exc:  # noqa: BLE001

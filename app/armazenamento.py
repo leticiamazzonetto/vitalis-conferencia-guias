@@ -39,6 +39,10 @@ class Storage(ABC):
     def ids_com_chave(self, chave: list, excluir_id: str = "") -> list:
         """Ids de guias já conferidas com a mesma chave de duplicata."""
 
+    @abstractmethod
+    def apagar_tudo(self) -> int:
+        """Limpa o histórico (ex.: conferências de teste). Devolve quantas linhas saíram."""
+
 
 class SQLiteStorage(Storage):
 
@@ -133,6 +137,14 @@ class SQLiteStorage(Storage):
                 (json.dumps(list(chave), ensure_ascii=False), excluir_id),
             ).fetchall()
         return [l["id_guia"] for l in linhas if l["id_guia"]]
+
+
+    def apagar_tudo(self) -> int:
+        with self._conectar() as conn:
+            n = conn.execute("SELECT COUNT(*) FROM conferencias").fetchone()[0]
+            conn.execute("DELETE FROM conferencias")
+            conn.commit()
+        return n
 
 
 _ARQUIVO_PADRAO = os.path.join(
