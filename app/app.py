@@ -690,6 +690,8 @@ elif pagina == "MCP":
                     f"cole <code>{MCP_URL}</code> › Adicionar. Sem login, sem chave.</p>"
                     "<p><b>ChatGPT:</b> Configurações › Conectores › Criar (modo desenvolvedor) › cole o mesmo "
                     "endereço.</p>"
+                    "<p><b>Codex, Kimi, Cursor, Gemini e outros:</b> mesmo caminho, \"MCP servers\" ou "
+                    "\"Conectores\" nas configurações, colando o endereço.</p>"
                     "<p><b>Claude Code:</b> uma linha no terminal:</p></div>", unsafe_allow_html=True)
         st.code(f"claude mcp add --transport http vitalis-guias {MCP_URL}", language="bash")
         st.markdown("<div class='box'><h4>2. Dar ao assistente o roteiro da recepção (a Skill)</h4>"
@@ -765,9 +767,10 @@ elif pagina == "MCP":
     with st.expander("Outras formas de conectar (Claude Desktop, servidor local, endereço)"):
         st.markdown("**Claude Desktop** (`claude_desktop_config.json`), apontando para o servidor publicado:")
         st.code(json.dumps({"mcpServers": {"vitalis-guias": {"url": MCP_URL}}}, indent=2), language="json")
-        st.markdown("**Rodar o servidor no seu computador** (a partir do repositório): abra a pasta no Claude Code, "
-                    "o `.mcp.json` já registra; ou:")
-        st.code("pip install -r requirements.txt\nclaude mcp add vitalis-guias -- python mcp_server/server.py", language="bash")
+        st.markdown("**Rodar o servidor no seu computador** (a partir do repositório), em qualquer assistente que "
+                    "aceite MCP por stdio: instale e registre o comando abaixo no arquivo de MCP do seu assistente "
+                    "(`command: python`, `args: [\"mcp_server/server.py\"]`). No Claude Code o `.mcp.json` da raiz já faz isso.")
+        st.code("pip install -r requirements.txt\npython mcp_server/server.py", language="bash")
         st.markdown(f"**Endereço para máquinas:** `{MCP_URL}` (streamable HTTP). Abrir no navegador não mostra "
                     "nada útil: é um protocolo para assistentes, não uma página.")
     st.markdown("<p class='muted'>A regra é uma só: <code>motor.py</code>. O site, o MCP e a Skill chamam a mesma "
