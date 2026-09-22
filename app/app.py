@@ -227,6 +227,17 @@ def mostrar_decisao(d, titulo=None):
 # Barra lateral: navegação + filtros
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("### 🩺 Vitalis · Guias")
+PAGINAS = ["Painel", "Lista de correções", "Conferir guia", "Relatório semanal", "Regras dos convênios", "MCP", "Documentos"]
+SLUGS = {"Painel": "painel", "Lista de correções": "correcoes", "Conferir guia": "conferir",
+         "Relatório semanal": "relatorio", "Regras dos convênios": "regras", "MCP": "mcp", "Documentos": "documentos"}
+PAGINA_POR_SLUG = {v: k for k, v in SLUGS.items()}
+
+# Link direto para uma página: https://vitalis.geaia.com/?pagina=relatorio
+if "pagina" not in st.session_state:
+    slug_url = (st.query_params.get("pagina") or "").strip().lower()
+    if slug_url in PAGINA_POR_SLUG:
+        st.session_state["pagina"] = PAGINA_POR_SLUG[slug_url]
+
 # Um botão de outra página (ex.: "Top 3 ações" do relatório) pede para abrir a lista já filtrada.
 # O pedido é aplicado AQUI, antes de os widgets existirem (o Streamlit não deixa mudar depois).
 if "_ir_para" in st.session_state:
@@ -237,9 +248,10 @@ if "_ir_para" in st.session_state:
     st.session_state["lc_con"] = []
     st.session_state["lc_est"] = []
     st.session_state.pop("lc_dias", None)
-pagina = st.sidebar.radio("Página", ["Painel", "Lista de correções", "Conferir guia", "Relatório semanal",
-                                     "Regras dos convênios", "MCP", "Documentos"], label_visibility="collapsed",
-                          key="pagina")
+pagina = st.sidebar.radio("Página", PAGINAS, label_visibility="collapsed", key="pagina")
+# Mantém o endereço do navegador apontando para a página atual (link copiável).
+if st.query_params.get("pagina") != SLUGS[pagina]:
+    st.query_params["pagina"] = SLUGS[pagina]
 try:
     _dec_ia, _ = carregar_lote(DATA_REF, IA_LIGADA)
     _lidas = sum(1 for d in _dec_ia if d.get("sinais") and not d["sinais"].get("nao_lida"))
