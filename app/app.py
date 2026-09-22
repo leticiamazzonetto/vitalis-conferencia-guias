@@ -7,7 +7,7 @@ duas funções que o MCP expõe e que a Skill usa. Nenhuma regra é reescrita aq
 Páginas:
   Painel               números do lote, tabela com filtros, detalhe da guia
   Lista de correções   o que cada unidade faz no sistema de gestão, guia por guia
-  Conferir guia        formulário, texto colado ou CSV -> decisão + por quê + o que fazer (gravada)
+  Conferir guia        formulário ou CSV -> decisão + por quê + o que fazer; botão Importar grava
   Relatório semanal    com filtro por semana; cada ação abre a lista de correções filtrada
   Regras dos convênios o que cada convênio exige e cobre
   MCP                  conectar um assistente de IA e usar no dia a dia
@@ -23,10 +23,8 @@ import csv
 import io
 import json
 import os
-import re
 import sys
 import traceback
-import unicodedata
 
 import pandas as pd
 import streamlit as st
@@ -154,58 +152,7 @@ def acao_nao_enviar(d):
 
 
 # ---------------------------------------------------------------------------
-# Texto colado -> campos (parser determinístico, sem IA)
-# ---------------------------------------------------------------------------
-def _sem_acento(s):
-    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn").lower()
-
-
-ALIASES = {
-    "id_guia": ["id_guia", "id da guia", "guia", "nº da guia", "numero da guia"],
-    "unidade": ["unidade"],
-    "data_atendimento": ["data_atendimento", "data do atendimento", "atendimento", "data do atend", "atend"],
-    "paciente": ["paciente"],
-    "convenio": ["convenio", "convênio", "plano"],
-    "carteirinha": ["carteirinha", "carteira", "numero da carteirinha"],
-    "cid": ["cid"],
-    "procedimento_codigo": ["procedimento_codigo", "codigo do procedimento", "procedimento", "codigo", "código"],
-    "numero_autorizacao": ["numero_autorizacao", "numero da autorizacao", "autorizacao", "autorização", "aut"],
-    "autorizacao_validade": ["autorizacao_validade", "validade da autorizacao", "validade"],
-    "autorizacao_sessoes_limite": ["autorizacao_sessoes_limite", "limite de sessoes", "limite"],
-    "sessao_numero_na_autorizacao": ["sessao_numero_na_autorizacao", "sessao", "sessão", "sessao numero", "numero da sessao"],
-    "profissional": ["profissional", "fisioterapeuta", "medico", "médico"],
-    "profissional_registro": ["profissional_registro", "registro do profissional", "registro", "crefito", "crm"],
-    "valor": ["valor", "r$"],
-    "observacao_recepcao": ["observacao_recepcao", "observacao", "observação", "obs"],
-    "data_lancamento": ["data_lancamento", "data de lancamento", "lancamento", "lançamento"],
-}
-_ALIAS_INDEX = {_sem_acento(a): campo for campo, lst in ALIASES.items() for a in lst}
-
-
-def texto_para_campos(texto):
-    """Uma linha = um campo ('validade: 30/09/2026'). ';' só separa quando a linha não tem ':'.
-    Campo repetido: vale o primeiro e o segundo vai para os ignorados, com aviso."""
-    campos, ignorados = {}, []
-    for linha in (texto or "").split("\n"):
-        pedacos = [linha] if (":" in linha or "=" in linha) else [p for p in linha.split(";")]
-        for pedaco in pedacos:
-            if ":" not in pedaco and "=" not in pedaco:
-                if pedaco.strip():
-                    ignorados.append(pedaco.strip())
-                continue
-            chave, valor = re.split(r"[:=]", pedaco, maxsplit=1)
-            alvo = _ALIAS_INDEX.get(_sem_acento(chave.strip()))
-            if not alvo:
-                ignorados.append(pedaco.strip())
-            elif alvo in campos:
-                ignorados.append(f"campo repetido, valeu o primeiro: {pedaco.strip()}")
-            else:
-                campos[alvo] = valor.strip()
-    return campos, ignorados
-
-
-# ---------------------------------------------------------------------------
-# Conferir uma guia nova (formulário, texto ou CSV passam por aqui)
+# Conferir uma guia nova (formulário e CSV passam por aqui)
 # ---------------------------------------------------------------------------
 def conferir(campos):
     """Confere sem gravar. Compara com o conjunto atual (lote + importadas)."""
@@ -513,7 +460,7 @@ elif pagina == "Conferir guia":
     try:
         regras = carregar_regras(CAMINHO_REGRAS)
         nomes = [b["nome"] for b in regras["convenios"]]
-        aba_form, aba_texto, aba_csv = st.tabs(["Formulário", "Colar texto", "Enviar CSV"])
+        aba_form, aba_csv = st.tabs(["Formulário", "Enviar CSV"])
 
         with aba_form:
             with st.form("guia_nova"):
@@ -561,31 +508,6 @@ elif pagina == "Conferir guia":
                     importar([d_form], "formulario", f"formulário · {d_form['id_guia']}")
                     st.session_state.pop("conf_form", None)
                     st.success(f"{d_form['id_guia']} importada. Já aparece no Painel, na Lista de correções e no Relatório.")
-                    st.rerun()
-
-        with aba_texto:
-            st.caption("Cole como a recepção escreve, um campo por linha: `convênio: Vitalcard`, "
-                       "`validade: 30/09/2026`, `valor: 62,00`, `obs: paciente trouxe autorização nova`...")
-            exemplo = ("guia: G-NOVA-0002\nconvênio: Saúde Interior\ncarteirinha: 555123456\n"
-                       "procedimento: 50000470\natendimento: 28/08/2026\nvalidade: 20/09/2026\n"
-                       "sessão: 4\nregistro: CREFITO-3 156740-F\nvalor: 62,00\n"
-                       "obs: Autorizado por telefone, protocolo 990421, aguardando número.")
-            texto = st.text_area("Guia colada", exemplo, height=230, label_visibility="collapsed")
-            if st.button("Conferir texto colado", type="primary"):
-                campos, ignorados = texto_para_campos(texto)
-                if ignorados:
-                    st.caption("Linhas que não entendi (ignoradas): " + " · ".join(ignorados))
-                try:
-                    st.session_state["conf_texto"] = conferir(campos)
-                except Exception as exc:  # noqa: BLE001
-                    bloco_erro_amigavel(exc)
-            d_txt = st.session_state.get("conf_texto")
-            if d_txt:
-                mostrar_decisao(d_txt)
-                if st.button("Importar para o painel", key="imp_texto", type="primary"):
-                    importar([d_txt], "texto", f"texto colado · {d_txt['id_guia']}")
-                    st.session_state.pop("conf_texto", None)
-                    st.success(f"{d_txt['id_guia']} importada. Já aparece no Painel, na Lista de correções e no Relatório.")
                     st.rerun()
 
         with aba_csv:

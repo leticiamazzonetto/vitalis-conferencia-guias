@@ -6,7 +6,7 @@ persistência mora atrás da interface `Storage`. Hoje a implementação é SQLi
 em disco, stdlib, sem servidor, sem senha). Trocar para Postgres é escrever uma classe
 `PostgresStorage(Storage)` com os mesmos métodos e mudar uma linha em `obter_storage()`.
 
-O que é guardado: cada guia conferida pelo site (formulário, texto colado ou CSV), com a
+O que é guardado: cada guia importada pelo site (formulário ou CSV), com a
 decisão completa em JSON, a chave de duplicata (para a próxima guia igual ser pega) e
 quando foi conferida. Os dados-fonte (guias.csv, regras_convenio.json) continuam sendo a
 fonte de verdade em disco; isto é o rastro do que o sistema decidiu.

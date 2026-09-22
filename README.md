@@ -12,7 +12,7 @@ A Clínica Vitalis lança cerca de 900 guias de convênio por mês e só descobr
 ## Como a guia entra e a decisão sai
 
 ```
-guia (formulário, texto colado, CSV, ou chamada ao MCP)
+guia (formulário, CSV, ou chamada ao MCP)
   → normalizador.py   arruma o formato: data dd/mm → ISO, "62,00" → 62.0, campos vazios
   → observacao.py     a IA lê o que a recepção escreveu à mão e marca caixinhas (sinais)
   → motor.py          a REGRA decide, comparando a guia com regras_convenio.json
@@ -33,7 +33,7 @@ A correção acontece **no sistema de gestão** (que não vai ser trocado). A fe
 
 - **Painel**: cartões (conferidas, OK, corrigir, não enviar, prazo de envio), tabela com filtros por unidade, convênio, profissional, procedimento, decisão, tipo de problema e busca por guia ou paciente; detalhe de cada guia com "por quê" e "o que fazer".
 - **Lista de correções**: o que cada unidade precisa fazer hoje, guia por guia, com filtros e download em CSV.
-- **Conferir guia**: formulário, texto colado como a recepção escreve, ou CSV. A guia nova é comparada com o lote e com o histórico (cópia) e fica gravada em SQLite.
+- **Conferir guia**: formulário ou CSV exportado do sistema de gestão. A decisão aparece na hora; o botão "Importar para o painel" grava a guia, que passa a fazer parte do Painel, da Lista de correções, do Relatório e do MCP (mesmo id substitui a anterior). Cada importação pode ser removida depois, por arquivo.
 - **Relatório semanal**: o quadro da semana, decisões, problemas por tipo, por unidade e por convênio, com filtro por semana; cada ação do "Top 3" abre a lista de correções já filtrada.
 - **Regras dos convênios**: o que cada convênio exige e cobre, direto do arquivo de regras.
 - **MCP**: como conectar um assistente de IA (Claude, ChatGPT, Codex e outros) e usar no dia a dia, com a Skill e o `llms.md` para baixar.
