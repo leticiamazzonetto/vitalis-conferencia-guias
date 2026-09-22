@@ -681,8 +681,37 @@ elif pagina == "MCP":
                 "contexto completo, envie também o arquivo `llms.md`.")
     st.code(MENSAGEM_IA, language="text", wrap_lines=True)
 
-    st.markdown("**Claude Code**, uma linha:")
-    st.code(f"claude mcp add --transport http vitalis-guias {MCP_URL}", language="bash")
+    st.markdown("## Como usar no dia a dia para conferir guias")
+    st.markdown('<p class="sub">Quatro passos. O primeiro se faz uma vez só.</p>', unsafe_allow_html=True)
+    p1, p2 = st.columns(2, gap="large")
+    with p1:
+        st.markdown("<div class='box'><h4>1. Conectar o fiscal ao seu assistente (uma vez)</h4>"
+                    "<p><b>Claude (claude.ai):</b> Configurações › Conectores › Adicionar conector personalizado › "
+                    f"cole <code>{MCP_URL}</code> › Adicionar. Sem login, sem chave.</p>"
+                    "<p><b>ChatGPT:</b> Configurações › Conectores › Criar (modo desenvolvedor) › cole o mesmo "
+                    "endereço.</p>"
+                    "<p><b>Claude Code:</b> uma linha no terminal:</p></div>", unsafe_allow_html=True)
+        st.code(f"claude mcp add --transport http vitalis-guias {MCP_URL}", language="bash")
+        st.markdown("<div class='box'><h4>2. Dar ao assistente o roteiro da recepção (a Skill)</h4>"
+                    "<p>Baixe a Skill abaixo e anexe o arquivo na conversa, ou cole o conteúdo dele nas "
+                    "instruções do seu Projeto (Claude) ou do seu GPT (ChatGPT). Ela ensina o assistente a "
+                    "entender a guia colada de qualquer jeito e a responder sempre no mesmo formato.</p></div>",
+                    unsafe_allow_html=True)
+        try:
+            with open(os.path.join(RAIZ, ".claude", "skills", "conferir-guia", "SKILL.md"), "rb") as _f:
+                st.download_button("Baixar a Skill (SKILL.md)", _f.read(), "SKILL.md", "text/markdown",
+                                   use_container_width=True)
+        except OSError:
+            st.caption("Skill não encontrada no servidor.")
+    with p2:
+        st.markdown("<div class='box'><h4>3. Colar a guia do jeito que saiu da tela</h4>"
+                    "<p>Não precisa organizar nada. Escreva \"confere essa guia:\" e cole. Data com barra, vírgula no "
+                    "valor e campo faltando não são problema.</p></div>", unsafe_allow_html=True)
+        st.markdown("<div class='box'><h4>4. Ler a resposta e agir no sistema de gestão</h4>"
+                    "<p>🟢 <b>OK</b>: envie. 🟠 <b>CORRIGIR</b>: faça o que está em \"Fazer\" no sistema de gestão e "
+                    "confira de novo. 🔴 <b>NÃO ENVIAR</b>: fature como particular ou descarte a cópia. "
+                    "O assistente nunca aprova sozinho; quem decide é a regra do convênio.</p></div>",
+                    unsafe_allow_html=True)
 
     st.markdown("## Depois de conectar, é só colar a guia")
     st.code("confere essa guia: SI, carteirinha 555123456, sessão musculoesquelética, atend 28/08, "
@@ -749,8 +778,8 @@ elif pagina == "MCP":
 # ===========================================================================
 elif pagina == "Documentos":
     st.markdown("# Documentos")
-    st.markdown('<p class="sub">A Skill para a recepção, o README "Como fiz", o relatório gerado, as regras dos '
-                'convênios, o prompt da IA e a configuração do MCP. Os mesmos arquivos do repositório.</p>',
+    st.markdown('<p class="sub">O que a clínica usa no dia a dia: a Skill da recepção, as regras dos convênios, '
+                'o modelo de planilha para conferir em lote e a instrução que a IA recebe.</p>',
                 unsafe_allow_html=True)
 
     def _ler(rel):
@@ -761,28 +790,24 @@ elif pagina == "Documentos":
             return None
 
     documentos = [
-        ("Skill · conferir-guia (SKILL.md)", ".claude/skills/conferir-guia/SKILL.md", "SKILL.md",
-         "O roteiro que o assistente segue quando a recepcionista cola uma guia. Coloque em "
-         "`.claude/skills/conferir-guia/` do seu projeto no Claude Code."),
-        ("README · Como fiz", "README.md", "README.md",
-         "Ferramentas e por quê, o que a IA gerou e o que eu mudei na mão, o que ficou de fora, como testei."),
-        ("Relatório semanal (Markdown)", "docs/relatorio-terca.md", "relatorio-semanal.md",
-         "O relatório do lote de agosto gerado pela ferramenta."),
-        ("Relatório semanal (HTML)", "docs/relatorio-terca.html", "relatorio-semanal.html",
-         "O mesmo relatório, pronto para abrir no navegador ou imprimir."),
-        ("Regras dos convênios (JSON)", "dados/regras_convenio.json", "regras_convenio.json",
-         "A fonte de verdade do motor: o que cada convênio exige e cobre."),
-        ("Prompt da IA (observação da recepção)", "prompts/observacao.md", "prompt-observacao.md",
-         "A instrução que a IA recebe para transformar o bilhete da recepção em sinais."),
-        ("Configuração do MCP para o Claude Code (.mcp.json)", ".mcp.json", "mcp.json",
-         "Coloque na raiz do projeto para o Claude Code registrar o servidor."),
-        ("llms.md · texto completo para modelos de linguagem", "docs/llms.md", "vitalis-llms.md",
-         "Tudo que um assistente precisa saber: ferramentas do MCP, regras dos convênios, como o motor decide, "
-         "formato de resposta."),
-        ("Perguntas feitas à banca e respostas", "docs/PERGUNTAS.md", "perguntas-expert.md",
-         "Validade máxima, data da conferência e o que a guia declara."),
-        ("Dicionário de dados da prova", "dados/dicionario.html", "dicionario.html",
-         "O significado de cada coluna do CSV, como a banca forneceu."),
+        ("Skill da recepção (SKILL.md)", ".claude/skills/conferir-guia/SKILL.md", "SKILL.md",
+         "O roteiro que o seu assistente de IA segue quando você cola uma guia: ele organiza os campos, "
+         "consulta o fiscal e responde OK, CORRIGIR ou NÃO ENVIAR com o que fazer. Como usar: página MCP, "
+         "\"Como usar no dia a dia\"."),
+        ("Regras dos convênios", "dados/regras_convenio.json", "regras_convenio.json",
+         "O que cada convênio exige (campos obrigatórios, limite de sessões, prazo de envio) e cobre. É o "
+         "arquivo que o fiscal consulta; convênio novo entra aqui, sem mudar o sistema."),
+        ("Modelo de planilha para conferir em lote (CSV)", "docs/modelo-guias.csv", "modelo-guias.csv",
+         "As colunas que a página \"Conferir guia › Enviar CSV\" espera, com uma linha de exemplo. Exporte do "
+         "sistema de gestão neste formato e envie."),
+        ("Instrução que a IA recebe para ler a observação da recepção", "prompts/observacao.md",
+         "instrucao-ia-observacao.md",
+         "Quando a recepcionista escreve uma observação na guia (ex.: \"paciente trouxe autorização nova, "
+         "validade 30/09\"), a IA lê esse texto e marca o que ele significa para a regra. Este é o texto "
+         "exato que a IA recebe. Está aqui por transparência: você vê o que ela é orientada a fazer e o que "
+         "ela nunca decide."),
+        ("Documentação técnica do projeto (README)", "README.md", "README.md",
+         "Como o sistema foi construído, com quais ferramentas e por quê. Para quem for dar manutenção."),
     ]
     for titulo, rel, nome, desc in documentos:
         conteudo = _ler(rel)
@@ -793,7 +818,8 @@ elif pagina == "Documentos":
         else:
             c2.download_button("Baixar", conteudo, nome, key=f"dl_{nome}", use_container_width=True)
         st.markdown("<hr style='margin:.3rem 0;border:0;border-top:1px solid #EEF2F0'>", unsafe_allow_html=True)
-    st.markdown("<p class='muted'>Repositório completo: ver o README, seção “Repositório”.</p>", unsafe_allow_html=True)
+    st.markdown("<p class='muted'>Conectar um assistente de IA e baixar o texto completo para modelos: página MCP.</p>",
+                unsafe_allow_html=True)
 
 # ===========================================================================
 # REGRAS DOS CONVÊNIOS

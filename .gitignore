@@ -36,3 +36,6 @@ resultados.csv
 
 # O exemplo (só nomes, sem valores) DEVE ir ao repo
 !.env.example
+
+# Material só da candidata (fica em CLIENTES, fora do repo publico)
+docs/ENTREGA.md

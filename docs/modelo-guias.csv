@@ -1,0 +1,2 @@
+id_guia,unidade,data_atendimento,paciente,convenio,carteirinha,cid,procedimento_codigo,procedimento_descricao,numero_autorizacao,autorizacao_validade,autorizacao_sessoes_limite,sessao_numero_na_autorizacao,profissional,profissional_registro,valor,observacao_recepcao,data_lancamento
+G-2609-0001,Sul,28/08/2026,P-1036,Vitalcard,884410270,M79.7,50000470,Sessão de fisioterapia musculoesquelética,AUT887507,28/09/2026,10,7,Bruno Castanho,CREFITO-3 204411-F,"62,00",,31/08/2026

@@ -122,7 +122,7 @@ Além dos testes: guia colada com data invertida, vírgula e observação de pro
 
 ### Quanto tempo levou
 
-Ver `docs/DIARIO.md`. [Leticia: preencher as suas horas de leitura, decisão e revisão.]
+Ver `docs/DIARIO.md`.
 
 ### Perguntas feitas à banca
 
