@@ -6,7 +6,7 @@ Ordem do relatório (a ordem em que o dono precisa ler):
   2. O que a recepção corrige (CORRIGIR, com R$ em risco)
   3. O que precisa de decisão (NÃO ENVIAR: reclassificar ou descartar)
   4. Cortes por unidade e por convênio
-  5. Top 3 ações da semana
+  5. As três ações que mais impactam a semana
 Uma página, linguagem de dono de clínica, número antes de adjetivo. Só stdlib.
 
 Uso:
@@ -125,7 +125,7 @@ def montar_texto(r, periodo=None):
             L.append(f"| {k} | {d['total']} | {d['ok']} | {d['corrigir']} | {d['nao_enviar']} | "
                      f"{moeda(d['valor_em_risco'])} | {moeda(d['valor_reclassificar'])} |")
         L.append("")
-    L.append("## 5. Top 3 ações da semana")
+    L.append("## 5. As três ações que mais impactam a semana")
     L.append("")
     for i, (tipo, n) in enumerate(list(r["problemas_por_tipo"].items())[:3], 1):
         L.append(f"{i}. " + ACAO_POR_TIPO.get(tipo, f"Resolver as {{n}} guias de '{tipo}'.").format(n=n))

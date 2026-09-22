@@ -47,7 +47,7 @@ Nenhuma guia a menos de 7 dias do prazo de envio: o lote foi conferido na data d
 | Saúde Interior | 25 | 16 | 9 | 0 | R$ 558,00 | R$ 0,00 |
 | Plano Bem | 15 | 8 | 4 | 3 | R$ 256,00 | R$ 270,00 |
 
-## 5. Top 3 ações da semana
+## 5. As três ações que mais impactam a semana
 
 1. Refazer a autorização das 13 guias com validade vencida antes de qualquer envio.
 2. Completar o campo obrigatório que falta em 8 guias (número de autorização, CID ou registro).

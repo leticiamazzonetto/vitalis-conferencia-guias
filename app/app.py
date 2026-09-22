@@ -647,9 +647,9 @@ elif pagina == "Relatório semanal":
             periodo = escolha.lower()
         texto = montar_texto(r, periodo=periodo)
         corpo = texto.split("## O quadro da semana", 1)[1]           # título e subtítulo já estão acima
-        antes, _, depois = corpo.partition("## 5. Top 3 ações da semana")
+        antes, _, depois = corpo.partition("## 5. As três ações que mais impactam a semana")
         st.markdown(("## O quadro da semana" + antes).replace("R$", "R\\$"))   # "$...$" viraria fórmula
-        st.markdown("## 5. Top 3 ações da semana")
+        st.markdown("## 5. As três ações que mais impactam a semana")
         from gerar_relatorio import ACAO_POR_TIPO
         for i, (tipo, n) in enumerate(list(r["problemas_por_tipo"].items())[:3], 1):
             frase = ACAO_POR_TIPO.get(tipo, f"Resolver as {{n}} guias de '{tipo}'.").format(n=n)
