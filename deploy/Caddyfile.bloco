@@ -1,0 +1,17 @@
+# Bloco em /etc/caddy/Caddyfile. O Caddy e o porteiro: emite e renova o certificado HTTPS
+# sozinho, recebe na porta publica e entrega ao Streamlit (8502) ou ao MCP (8503), portas
+# internas que nao sao expostas para fora.
+vitalis.geaia.com {
+	encode gzip zstd
+	handle /mcp* {
+		reverse_proxy 127.0.0.1:8503
+	}
+	handle {
+		reverse_proxy 127.0.0.1:8502
+	}
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}

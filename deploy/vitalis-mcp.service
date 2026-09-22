@@ -1,0 +1,24 @@
+# /etc/systemd/system/vitalis-mcp.service
+# O MESMO servidor MCP do repositorio, por HTTP, atras do Caddy (https://vitalis.geaia.com/mcp).
+[Unit]
+Description=Vitalis - MCP por HTTP (conferencia de guias)
+After=network.target
+
+[Service]
+User=vitalis
+Group=vitalis
+WorkingDirectory=/opt/vitalis
+EnvironmentFile=/etc/vitalis/env
+Environment=VITALIS_MCP_HOST=127.0.0.1
+Environment=VITALIS_MCP_PORT=8503
+Environment=VITALIS_MCP_HOSTS=vitalis.geaia.com,127.0.0.1:8503,localhost:8503
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/vitalis/.venv/bin/python mcp_server/server.py --http
+Restart=on-failure
+RestartSec=5
+MemoryMax=512M
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

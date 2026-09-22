@@ -1,0 +1,38 @@
+# --- Ambiente Python ---
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# --- Binários locais (cloudflared do preview — NÃO vai pro repo) ---
+.bin/
+
+# --- Banco de histórico local (SQLite gerado em runtime; NÃO versionar) ---
+app/dados_app/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Segredos: por construção não existem no projeto; barreira extra ---
+.env
+.env.*
+*.key
+*.pem
+secrets.toml
+.streamlit/secrets.toml
+
+# --- Sistema ---
+.DS_Store
+Thumbs.db
+
+# --- Saídas de trabalho que não precisam ir ao repo (opcional) ---
+# resultados.json e resultados.csv são regenerados pelo batch; mantê-los é opcional.
+
+# --- Cache dos sinais da IA e histórico (gerados em runtime) ---
+dados_app/
+resultados.json
+resultados.csv
+
+# O exemplo (só nomes, sem valores) DEVE ir ao repo
+!.env.example
