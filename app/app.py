@@ -238,7 +238,7 @@ if "pagina" not in st.session_state:
     if slug_url in PAGINA_POR_SLUG:
         st.session_state["pagina"] = PAGINA_POR_SLUG[slug_url]
 
-# Um botão de outra página (ex.: "Top 3 ações" do relatório) pede para abrir a lista já filtrada.
+# Um botão de outra página (ex.: "as três ações que mais impactam a semana", no relatório) pede para abrir a lista já filtrada.
 # O pedido é aplicado AQUI, antes de os widgets existirem (o Streamlit não deixa mudar depois).
 if "_ir_para" in st.session_state:
     destino = st.session_state.pop("_ir_para")

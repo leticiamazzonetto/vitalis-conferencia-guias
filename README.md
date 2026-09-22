@@ -34,7 +34,7 @@ A correção acontece **no sistema de gestão** (que não vai ser trocado). A fe
 - **Painel**: cartões (conferidas, OK, corrigir, não enviar, prazo de envio), tabela com filtros por unidade, convênio, profissional, procedimento, decisão, tipo de problema e busca por guia ou paciente; detalhe de cada guia com "por quê" e "o que fazer".
 - **Lista de correções**: o que cada unidade precisa fazer hoje, guia por guia, com filtros e download em CSV.
 - **Conferir guia**: formulário ou CSV exportado do sistema de gestão. A decisão aparece na hora; o botão "Importar para o painel" grava a guia, que passa a fazer parte do Painel, da Lista de correções, do Relatório e do MCP. Se a mesma guia for importada de novo depois de corrigida no sistema de gestão, a decisão nova substitui a anterior: é assim que uma guia "corrigir" vira "OK". Cada importação pode ser removida depois, por arquivo.
-- **Relatório semanal**: o quadro da semana, decisões, problemas por tipo, por unidade e por convênio, com filtro por semana; cada ação do "Top 3" abre a lista de correções já filtrada.
+- **Relatório semanal**: o quadro da semana, decisões, problemas por tipo, por unidade e por convênio, com filtro por semana; cada uma das "três ações que mais impactam a semana" abre a lista de correções já filtrada.
 - **Regras dos convênios**: o que cada convênio exige e cobre, direto do arquivo de regras.
 - **MCP**: como conectar um assistente de IA (Claude, ChatGPT, Codex e outros) e usar no dia a dia, com a Skill e o `llms.md` para baixar.
 - **Documentos**: a Skill, as regras, o modelo de CSV para conferir em lote, a instrução que a IA recebe e este README.
