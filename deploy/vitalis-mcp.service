@@ -9,6 +9,7 @@ User=vitalis
 Group=vitalis
 WorkingDirectory=/opt/vitalis
 EnvironmentFile=/etc/vitalis/env
+Environment=VITALIS_DB=/var/lib/vitalis/historico.db
 Environment=VITALIS_MCP_HOST=127.0.0.1
 Environment=VITALIS_MCP_PORT=8503
 Environment=VITALIS_MCP_HOSTS=vitalis.geaia.com,127.0.0.1:8503,localhost:8503

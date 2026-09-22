@@ -34,7 +34,9 @@ from mcp.server.mcpserver import MCPServer  # noqa: E402  (SDK mcp 2.x)
 import observacao as obs_mod  # noqa: E402
 from servico import consultar_regra as _consultar_regra  # noqa: E402
 from servico import verificar_guia as _verificar_guia, duplicatas_de  # noqa: E402
-from verificar_lote import processar_lote  # noqa: E402
+from verificar_lote import processar_lote, resumir  # noqa: E402
+sys.path.insert(0, os.path.join(RAIZ, "app"))
+from armazenamento import obter_storage  # noqa: E402
 
 CSV = os.path.join(RAIZ, "dados", "guias.csv")
 REGRAS = os.path.join(RAIZ, "dados", "regras_convenio.json")
@@ -55,12 +57,19 @@ _LOTE_CACHE: dict[str, Any] = {}
 
 
 def _lote():
-    """Lote de agosto conferido (cache em memória). IA ligada se houver chave."""
+    """Lote de agosto (cache) + guias importadas pelo site. IA ligada se houver chave."""
     if "decisoes" not in _LOTE_CACHE:
         decisoes, resumo = processar_lote(CSV, REGRAS, usar_ia=obs_mod.ia_disponivel())
         _LOTE_CACHE["decisoes"] = decisoes
-        _LOTE_CACHE["resumo"] = resumo
-    return _LOTE_CACHE["decisoes"], _LOTE_CACHE["resumo"]
+        _LOTE_CACHE["versao"] = resumo.get("versao_regras")
+    por_id = {d["id_guia"]: d for d in _LOTE_CACHE["decisoes"]}
+    try:
+        for imp in obter_storage().listar_importadas():
+            por_id[imp["id_guia"]] = imp
+    except Exception:  # noqa: BLE001
+        pass
+    lista = list(por_id.values())
+    return lista, resumir(lista, "data de lançamento de cada guia", _LOTE_CACHE["versao"], obs_mod.ia_disponivel())
 
 
 @mcp.tool()
@@ -98,8 +107,8 @@ def verificar_guia(guia: dict) -> dict:
 
 @mcp.tool()
 def resumo_lote() -> dict:
-    """Os números do lote de agosto (80 guias): total, OK, CORRIGIR, NÃO ENVIAR, valores,
-    problemas por tipo, cortes por unidade e por convênio. É o que alimenta o relatório semanal."""
+    """Os números do conjunto atual (80 guias de agosto + as importadas pelo site): total, OK,
+    CORRIGIR, NÃO ENVIAR, valores, problemas por tipo, por unidade e por convênio."""
     try:
         _, resumo = _lote()
         return {"ok": True, "resumo": resumo}   # o resumo tem seu próprio campo "ok" (quantidade)

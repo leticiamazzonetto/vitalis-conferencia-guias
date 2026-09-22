@@ -40,6 +40,10 @@ class Storage(ABC):
         """Ids de guias já conferidas com a mesma chave de duplicata."""
 
     @abstractmethod
+    def listar_importadas(self) -> list:
+        """A decisão mais recente de cada guia importada (uma por id_guia), mais nova primeiro."""
+
+    @abstractmethod
     def apagar_tudo(self) -> int:
         """Limpa o histórico (ex.: conferências de teste). Devolve quantas linhas saíram."""
 
@@ -138,6 +142,19 @@ class SQLiteStorage(Storage):
             ).fetchall()
         return [l["id_guia"] for l in linhas if l["id_guia"]]
 
+
+    def listar_importadas(self) -> list:
+        with self._conectar() as conn:
+            linhas = conn.execute(
+                "SELECT * FROM conferencias WHERE id IN (SELECT MAX(id) FROM conferencias GROUP BY id_guia) "
+                "ORDER BY id DESC"
+            ).fetchall()
+        saida = []
+        for l in linhas:
+            d = json.loads(l["decisao_json"] or "{}")
+            d.update({"id": l["id"], "criado_em": l["criado_em"], "origem": l["origem"]})
+            saida.append(d)
+        return saida
 
     def apagar_tudo(self) -> int:
         with self._conectar() as conn:

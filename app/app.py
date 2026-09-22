@@ -38,6 +38,7 @@ for p in (RAIZ, BASE_APP):
         sys.path.insert(0, p)
 
 from servico import verificar_guia, consultar_regra, carregar_regras, duplicatas_de  # noqa: E402
+from normalizador import normalizar_guia  # noqa: E402
 from verificar_lote import processar_lote, resumir  # noqa: E402
 from datetime import date, timedelta  # noqa: E402
 from gerar_relatorio import montar_texto  # noqa: E402
@@ -99,6 +100,22 @@ def carregar_lote(data_ref, usar_ia):
 @st.cache_resource(show_spinner=False)
 def storage():
     return obter_storage()
+
+
+def conjunto_atual():
+    """Lote de agosto + guias importadas pelo site (a importada substitui a de mesmo id)."""
+    decisoes, _ = carregar_lote(DATA_REF, IA_LIGADA)
+    por_id = {d["id_guia"]: d for d in decisoes}
+    importadas = []
+    try:
+        importadas = storage().listar_importadas()
+    except Exception:  # noqa: BLE001
+        pass
+    for imp in importadas:
+        por_id[imp["id_guia"]] = imp
+    lista = list(por_id.values())
+    versao = carregar_regras(CAMINHO_REGRAS).get("versao")
+    return lista, resumir(lista, "data de lançamento de cada guia", versao, IA_LIGADA), len(importadas)
 
 
 def moeda(v):
@@ -176,7 +193,7 @@ def texto_para_campos(texto):
                 if pedaco.strip():
                     ignorados.append(pedaco.strip())
                 continue
-            chave, valor = re.split(r"[:=]", pedaco, 1)
+            chave, valor = re.split(r"[:=]", pedaco, maxsplit=1)
             alvo = _ALIAS_INDEX.get(_sem_acento(chave.strip()))
             if not alvo:
                 ignorados.append(pedaco.strip())
@@ -190,19 +207,36 @@ def texto_para_campos(texto):
 # ---------------------------------------------------------------------------
 # Conferir uma guia nova (formulário, texto ou CSV passam por aqui)
 # ---------------------------------------------------------------------------
-def conferir_e_gravar(campos, origem):
-    decisoes_lote, _ = carregar_lote(DATA_REF, IA_LIGADA)
-    # Guia com id que já está no lote = a própria guia reconferida (não é cópia de si mesma).
-    ids_dup, nova = duplicatas_de(campos, decisoes_lote,
-                                  ids_historico_fn=lambda chave, meu_id: storage().ids_com_chave(chave, excluir_id=meu_id))
+def conferir(campos):
+    """Confere sem gravar. Compara com o conjunto atual (lote + importadas)."""
+    conjunto, _, _ = conjunto_atual()
+    # Guia com id que já está no conjunto = a própria guia reconferida (não é cópia de si mesma).
+    ids_dup, nova = duplicatas_de(campos, conjunto)
     decisao = verificar_guia(campos, data_ref=DATA_REF, ids_duplicata=ids_dup, usar_ia=IA_LIGADA,
                              guia_nova=nova)
-    try:
-        storage().salvar_resultado(decisao, origem=origem)
-        decisao["_gravou"] = True
-    except Exception:  # noqa: BLE001
-        decisao["_gravou"] = False
+    # Dados da guia que o painel, a lista e o relatório mostram.
+    g = normalizar_guia(campos if isinstance(campos, dict) else {})
+    regras = carregar_regras(CAMINHO_REGRAS)
+    proc = next((p for p in regras["procedimentos"] if p["codigo"] == g.get("procedimento_codigo")), None)
+    decisao.update({
+        "unidade": g.get("unidade", ""), "paciente": g.get("paciente", ""),
+        "profissional": g.get("profissional", ""),
+        "procedimento_codigo": g.get("procedimento_codigo", ""),
+        "procedimento_descricao": (proc or {}).get("descricao", g.get("procedimento_descricao", "")),
+        "data_atendimento": g.get("data_atendimento", ""),
+        "data_lancamento": g.get("data_lancamento", "") or decisao.get("data_referencia", ""),
+        "observacao_recepcao": g.get("observacao_recepcao", ""),
+    })
     return decisao
+
+
+def importar(decisoes, origem):
+    """Grava as decisões: a guia passa a fazer parte do painel, da lista e do relatório."""
+    n = 0
+    for d in decisoes:
+        storage().salvar_resultado(d, origem=origem)
+        n += 1
+    return n
 
 
 def mostrar_decisao(d, titulo=None):
@@ -273,7 +307,7 @@ st.sidebar.markdown(f"<p class='muted'>IA: {_ia_txt}</p>", unsafe_allow_html=Tru
 # ===========================================================================
 if pagina == "Painel":
     try:
-        decisoes, r = carregar_lote(DATA_REF, IA_LIGADA)
+        decisoes, r, n_importadas = conjunto_atual()
         df = pd.DataFrame([{
             "Guia": d["id_guia"], "Unidade": d.get("unidade", ""), "Convênio": d["convenio"],
             "Paciente": d.get("paciente", ""), "Profissional": d.get("profissional", ""),
@@ -331,7 +365,8 @@ if pagina == "Painel":
         ok_valor = float(f.loc[f["Decisão"] == OK, "Valor"].sum())
         urg_valor = float(f.loc[f["_urgente"], "Valor"].sum())
         st.markdown('<div class="kpis">'
-                    + kpi("Guias conferidas", len(f), f"{moeda(total_valor)} no {'recorte' if filtrado else 'lote'}")
+                    + kpi("Guias conferidas", len(f), f"{moeda(total_valor)} · 80 de agosto + {n_importadas} importadas"
+                          if not filtrado else f"{moeda(total_valor)} no recorte")
                     + kpi("OK", n_ok, f"{moeda(ok_valor)} prontos para envio", "ok",
                           "Guias sem nenhum problema. Podem ir ao convênio.")
                     + kpi("Corrigir", n_co, f"{moeda(risco)} recuperáveis se corrigidas", "corr",
@@ -400,7 +435,7 @@ elif pagina == "Lista de correções":
     st.markdown('<p class="sub">O que cada unidade precisa fazer no sistema de gestão antes do envio, guia por guia. '
                 'Depois de corrigir lá, a guia é conferida de novo e vira OK.</p>', unsafe_allow_html=True)
     try:
-        decisoes, _ = carregar_lote(DATA_REF, IA_LIGADA)
+        decisoes, _, _ = conjunto_atual()
         pend = [d for d in decisoes if d["decisao"] != OK]
         st.sidebar.markdown("---")
         st.sidebar.markdown("**Filtros**")
@@ -514,9 +549,17 @@ elif pagina == "Conferir guia":
                     "profissional_registro": registro, "observacao_recepcao": obs,
                 }
                 try:
-                    mostrar_decisao(conferir_e_gravar(campos, "formulario"))
+                    st.session_state["conf_form"] = conferir(campos)
                 except Exception as exc:  # noqa: BLE001
                     bloco_erro_amigavel(exc)
+            d_form = st.session_state.get("conf_form")
+            if d_form:
+                mostrar_decisao(d_form)
+                if st.button("Importar para o painel", key="imp_form", type="primary"):
+                    importar([d_form], "formulario")
+                    st.session_state.pop("conf_form", None)
+                    st.success(f"{d_form['id_guia']} importada. Já aparece no Painel, na Lista de correções e no Relatório.")
+                    st.rerun()
 
         with aba_texto:
             st.caption("Cole como a recepção escreve, um campo por linha: `convênio: Vitalcard`, "
@@ -531,9 +574,17 @@ elif pagina == "Conferir guia":
                 if ignorados:
                     st.caption("Linhas que não entendi (ignoradas): " + " · ".join(ignorados))
                 try:
-                    mostrar_decisao(conferir_e_gravar(campos, "texto"))
+                    st.session_state["conf_texto"] = conferir(campos)
                 except Exception as exc:  # noqa: BLE001
                     bloco_erro_amigavel(exc)
+            d_txt = st.session_state.get("conf_texto")
+            if d_txt:
+                mostrar_decisao(d_txt)
+                if st.button("Importar para o painel", key="imp_texto", type="primary"):
+                    importar([d_txt], "texto")
+                    st.session_state.pop("conf_texto", None)
+                    st.success(f"{d_txt['id_guia']} importada. Já aparece no Painel, na Lista de correções e no Relatório.")
+                    st.rerun()
 
         with aba_csv:
             st.caption("CSV com as colunas do dicionário (como o sistema de gestão exporta).")
@@ -542,7 +593,11 @@ elif pagina == "Conferir guia":
                 try:
                     conteudo = arq.getvalue().decode("utf-8-sig", errors="replace")
                     linhas_csv = [l for l in csv.DictReader(io.StringIO(conteudo)) if any((v or "").strip() for v in l.values())]
-                    resultados = [conferir_e_gravar(l, "csv") for l in linhas_csv]
+                    chave_arq = f"{arq.name}:{len(conteudo)}"
+                    if st.session_state.get("conf_csv_chave") != chave_arq:
+                        st.session_state["conf_csv"] = [conferir(l) for l in linhas_csv]
+                        st.session_state["conf_csv_chave"] = chave_arq
+                    resultados = st.session_state["conf_csv"]
                     n_ok = sum(1 for d in resultados if d["decisao"] == OK)
                     n_co = sum(1 for d in resultados if d["decisao"] == CORRIGIR)
                     n_ne = sum(1 for d in resultados if d["decisao"] == NAO_ENVIAR)
@@ -556,19 +611,28 @@ elif pagina == "Conferir guia":
                         "Guia": d["id_guia"], "Convênio": d["convenio"], "Decisão": d["decisao"],
                         "Por quê": " | ".join(d["motivos"]) or "", "O que fazer": " | ".join(d["correcoes"]) or "",
                     } for d in resultados]), use_container_width=True, hide_index=True)
+                    if st.button(f"Importar as {len(resultados)} guias para o painel", key="imp_csv", type="primary"):
+                        n = importar(resultados, "csv")
+                        st.session_state.pop("conf_csv", None)
+                        st.session_state.pop("conf_csv_chave", None)
+                        st.success(f"{n} guias importadas. Já aparecem no Painel, na Lista de correções e no Relatório.")
+                        st.rerun()
                 except Exception as exc:  # noqa: BLE001
                     bloco_erro_amigavel(exc)
 
-        st.markdown("## Histórico de guias conferidas neste site")
-        st.markdown("<p class='muted'>Acumulado de todas as conferências feitas por aqui (formulário, texto e CSV), "
-                    "inclusive testes. Não é o resultado do último envio.</p>", unsafe_allow_html=True)
+        st.markdown("## Guias importadas neste site")
+        st.markdown("<p class='muted'>Guias que você importou pelo formulário, por texto ou por CSV. Elas fazem parte "
+                    "do Painel, da Lista de correções e do Relatório junto com as 80 de agosto. Importar de novo uma guia "
+                    "com o mesmo id substitui a decisão anterior.</p>", unsafe_allow_html=True)
         try:
-            rh = storage().resumo()
-            st.markdown('<div class="kpis">' + kpi("Gravadas", rh["total"]) + kpi("OK", rh["ok"], "", "ok")
-                        + kpi("Corrigir", rh["corrigir"], moeda(rh["valor_em_risco_total"]), "corr")
-                        + kpi("Não enviar", rh["nao_enviar"], moeda(rh["valor_reclassificar_total"]), "nao")
+            regs = storage().listar_importadas()
+            n_ok = sum(1 for x in regs if x["decisao"] == OK)
+            n_co = sum(1 for x in regs if x["decisao"] == CORRIGIR)
+            n_ne = sum(1 for x in regs if x["decisao"] == NAO_ENVIAR)
+            st.markdown('<div class="kpis">' + kpi("Importadas", len(regs)) + kpi("OK", n_ok, "", "ok")
+                        + kpi("Corrigir", n_co, moeda(sum(x.get("valor_em_risco", 0) for x in regs)), "corr")
+                        + kpi("Não enviar", n_ne, moeda(sum(x.get("valor_reclassificar", 0) for x in regs)), "nao")
                         + "</div>", unsafe_allow_html=True)
-            regs = storage().listar(200)
             if regs:
                 st.dataframe(pd.DataFrame([{
                     "Quando (UTC)": x["criado_em"], "Origem": x["origem"], "Guia": x["id_guia"],
@@ -576,12 +640,12 @@ elif pagina == "Conferir guia":
                     "Por quê": " | ".join(x.get("motivos", [])) or "",
                 } for x in regs]), use_container_width=True, hide_index=True)
             else:
-                st.info("Nenhuma guia conferida ainda por este site.")
-            with st.expander("Limpar o histórico (apaga só as conferências deste site; o lote de agosto não muda)"):
-                confirmar = st.checkbox("Confirmo que quero apagar todo o histórico", key="confirma_limpar")
-                if st.button("Apagar histórico", disabled=not confirmar):
+                st.info("Nenhuma guia importada ainda.")
+            with st.expander("Remover todas as guias importadas (o lote de agosto não muda)"):
+                confirmar = st.checkbox("Confirmo que quero remover todas as importadas", key="confirma_limpar")
+                if st.button("Remover importadas", disabled=not confirmar):
                     n = storage().apagar_tudo()
-                    st.success(f"{n} conferências apagadas.")
+                    st.success(f"{n} registros removidos.")
                     st.rerun()
         except Exception as exc:  # noqa: BLE001
             bloco_erro_amigavel(exc)
@@ -593,7 +657,7 @@ elif pagina == "Conferir guia":
 # ===========================================================================
 elif pagina == "Relatório semanal":
     try:
-        decisoes, r_total = carregar_lote(DATA_REF, IA_LIGADA)
+        decisoes, r_total, _ = conjunto_atual()
 
         def semana_de(iso):
             try:
@@ -613,9 +677,9 @@ elif pagina == "Relatório semanal":
         rotulos = {f"Semana de {i.strftime('%d/%m')} a {f.strftime('%d/%m')}": k for k, (i, f) in
                    [((i, f), (i, f)) for (i, f) in sorted(semanas)]}
         total = r_total["total_conferidas"]
-        opcoes = [f"Agosto inteiro ({total} guias)"] + list(rotulos)
+        opcoes = [f"Tudo ({total} guias)"] + list(rotulos)
         st.markdown("# Relatório semanal · conferência de guias antes do envio")
-        st.markdown(f'<p class="sub">Clínica Vitalis · agosto de 2026 · {total} guias conferidas</p>',
+        st.markdown(f'<p class="sub">Clínica Vitalis · {total} guias conferidas (80 de agosto + importadas)</p>',
                     unsafe_allow_html=True)
         escolha = st.selectbox("Filtro por data:", opcoes, help="Semanas pela data de lançamento da guia")
         with st.expander("Como ler este relatório"):
@@ -627,8 +691,8 @@ elif pagina == "Relatório semanal":
                 "de outra guia. **Faturar particular** é a soma dessas guias (cópias valem zero).\n"
                 "- **Prazo de envio**: cada guia tem 30 ou 45 dias, contados do atendimento, para chegar ao convênio.\n"
                 "- **Por unidade / Por convênio**: os mesmos números, separados por unidade da clínica e por convênio.")
-        if escolha.startswith("Agosto"):
-            r, periodo = r_total, "agosto de 2026"
+        if escolha.startswith("Tudo"):
+            r, periodo = r_total, "todo o período"
         else:
             sub = semanas[rotulos[escolha]]
             r = resumir(sub, r_total["data_referencia"], r_total.get("versao_regras"), r_total.get("com_ia"))
