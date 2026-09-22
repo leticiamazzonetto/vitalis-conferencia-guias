@@ -14,7 +14,7 @@ Ferramentas:
 Dois transportes do MESMO servidor:
   stdio (padrão): o assistente sobe o processo local.  python mcp_server/server.py
   HTTP:  publicado na VPS atrás do Caddy.               python mcp_server/server.py --http
-         (porta interna 8503, caminho /mcp; a banca testa sem instalar nada)
+         (porta interna 8503, caminho /mcp; qualquer assistente conecta sem instalar nada)
 
 Fonte dos dados: dados/regras_convenio.json e dados/guias.csv, lidos direto do disco.
 Chave da IA (opcional): variável de ambiente ANTHROPIC_API_KEY. Sem ela, a observação da

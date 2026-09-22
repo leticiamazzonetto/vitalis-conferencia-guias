@@ -777,7 +777,7 @@ elif pagina == "MCP":
                 "função. O MCP é só a tomada.</p>", unsafe_allow_html=True)
 
 # ===========================================================================
-# DOCUMENTOS: tudo que a banca e a clínica precisam baixar, num lugar só
+# DOCUMENTOS: o que a clínica usa no dia a dia, num lugar só
 # ===========================================================================
 elif pagina == "Documentos":
     st.markdown("# Documentos")

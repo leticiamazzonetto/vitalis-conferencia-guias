@@ -2,7 +2,7 @@
 
 > Prova técnica (2ª fase) do processo seletivo da Expert Integrado para Consultor de Negócios com IA.
 > Na primeira prova eu deixei a glosa para "uma segunda fase". Esta é a segunda fase.
-> **Dados fictícios fornecidos pela banca.** Nenhum paciente, profissional ou convênio é real.
+> **Dados fictícios fornecidos pela Expert Integrado para a prova.** Nenhum paciente, profissional ou convênio é real.
 
 **Link rodando:** https://vitalis.geaia.com
 **MCP publicado:** https://vitalis.geaia.com/mcp
@@ -94,7 +94,7 @@ Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por 
 | IA | Claude Haiku 4.5 via API, só na observação da recepção | Custa centavos (9 chamadas para 80 guias, com cache por texto). A IA marca caixinhas; a regra decide. Se a IA cair, a guia vai para leitura humana. |
 | Site | Streamlit | Um arquivo, lido de cima para baixo. |
 | Histórico | SQLite em arquivo | 900 guias/mês não pedem banco gerenciado. Trocar por Postgres é uma classe (`app/armazenamento.py`). |
-| Hospedagem | Meu servidor (VPS) com Caddy e systemd | Plano grátis dorme e apaga o histórico; a banca abre o link semanas depois. A chave da IA fica em `/etc/vitalis/env`, fora do repositório. |
+| Hospedagem | Meu servidor (VPS) com Caddy e systemd | As hospedagens gratuitas de Streamlit (Streamlit Community Cloud, Hugging Face Spaces) colocam o app para dormir depois de algumas horas sem visita: quem abre o link vê uma tela de "acordar o app" e espera, e o que o app gravou em disco (o histórico de guias) some no reinício. No meu servidor o site fica ligado e o histórico persiste. A chave da IA fica em `/etc/vitalis/env`, fora do repositório. |
 | MCP | SDK oficial `mcp` (2.x), stdio + HTTP | Mesma função do site. Publicado por HTTP para testar sem instalar. |
 | Testes | `unittest` + gabarito independente | 78 testes: uma regra por teste, 5 casos reais de texto livre com dublê da IA, MCP de ponta a ponta, e o lote inteiro contra um gabarito gerado por uma implementação que **não** importa o motor. |
 
@@ -104,18 +104,18 @@ A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram 
 
 1. **Três estados, não dois.** A primeira versão tinha só OK e PENDENTE, e somava como "recuperável" R$ 550 de procedimentos que o convênio nunca vai pagar e R$ 160 de cópias. "Não enviar" é nomeado pela ação da clínica: faturar particular ou descartar. Não chamei de "recusar", porque isso seria prever o convênio sem fonte.
 2. **A IA não decide.** Ela só transforma o bilhete da recepção em sinais (`autorizacao_nova`, `protocolo_verbal`, `faturar_particular`...). Quem decide é `motor.py`, com teste. Temperatura zero, JSON fechado, cache, e falha vira "observação não lida" em vez de erro.
-3. **Prazo de envio contado do atendimento até a data da conferência.** A fórmula original (lançamento − atendimento) nunca disparava. Depois da orientação da banca, o lote de agosto é conferido na data de lançamento de cada guia; guia nova é conferida hoje.
+3. **Prazo de envio contado do atendimento até a data da conferência.** A fórmula original (lançamento − atendimento) nunca disparava. Seguindo o esclarecimento do Asafe (Expert Integrado), o lote de agosto é conferido na data de lançamento de cada guia; guia nova é conferida hoje.
 4. **Cópia de guia: uma vale, a outra não.** A original ganha aviso; a cópia vira NÃO ENVIAR com valor zero. Antes contava R$ 160 de risco que não existia.
 5. **Gabarito escrito fora do motor.** O teste das 80 guias compara o motor com `tests/gabarito.csv`, gerado por `tests/gerar_gabarito.py`, que reescreve as regras do zero sem importar o motor. Se os dois discordarem, o teste acusa.
-6. **Hospedar no meu servidor.** Streamlit Community Cloud dorme após 12 horas sem tráfego e o histórico some; Vercel + Supabase eram nove peças para explicar. Um subdomínio no Caddy que já servia meus sites resolveu com quatro peças.
+6. **Hospedar no meu servidor.** As hospedagens gratuitas dormem sem visitas e apagam o histórico (ver a tabela acima). Vercel + Supabase eram over-engineering para esta ferramenta nesta fase de produção: acrescentariam plataforma serverless, banco gerenciado, framework web e camadas de acesso a dados sem ganho para 900 guias por mês. A solução final tem quatro peças: Python (as regras), Streamlit (as telas), SQLite (o histórico) e o meu servidor com Caddy e systemd (o site no ar com HTTPS).
 
 ### O que ficou de fora e por quê
 
-- **Validade máxima da autorização (30/45/60 dias)**: o CSV não tem a data de concessão. Perguntei à banca; a resposta foi que a verificação possível é validade contra a data do atendimento. Fica documentado, não implementado.
-- **Integração com a API do sistema de gestão**: não existe nesta prova. O MCP é a porta onde ela encaixaria.
+- **Validade máxima da autorização (30/45/60 dias)**: o CSV não tem a data de concessão. O Asafe (Expert Integrado) esclareceu que a verificação possível é validade contra a data do atendimento. Fica documentado, não implementado.
+- **Integração com a API do sistema de gestão**: não existe nesta prova. Entraria como um conector próprio: um script agendado que lê as guias novas pela API do sistema de gestão e as passa a `servico.verificar_guia`, o mesmo caminho que o CSV usa hoje. Não é o MCP: o MCP é a porta para assistentes de IA, não para o sistema de gestão.
 - **Botão "marcar como corrigida"**: se o sistema de gestão tem API, quem sabe se a guia foi corrigida é ele, não um botão nosso. A guia corrigida é reconferida e vira OK.
 - **Feriados** no cálculo de dias úteis da autorização verbal.
-- **Inferência entre guias** (contar sessões de um paciente ao longo do mês): a banca orientou "confere o que a guia declara".
+- **Inferência entre guias** (contar sessões de um paciente ao longo do mês): o Asafe orientou "confere o que a guia declara".
 
 ### Como testei
 
@@ -128,11 +128,13 @@ Além dos testes: guia colada com data invertida, vírgula e observação de pro
 
 ### Quanto tempo levou
 
-Ver `docs/DIARIO.md`.
+6 h corridas no total.
 
-### Perguntas feitas à banca
+### Esclarecimentos recebidos do Asafe (Expert Integrado)
 
-`docs/PERGUNTAS.md`: validade máxima (sem data de concessão), data de referência da conferência (lançamento), e "confere o que a guia declara".
+1. O CSV só tem a data final da autorização; não existe data de concessão. A verificação possível é validade contra a data do atendimento.
+2. O lote de agosto é conferido na data de lançamento de cada guia; o prazo de envio conta da data do atendimento.
+3. As 80 guias são o recorte de agosto, não o histórico completo: confere o que a guia declara.
 
 ## Rodar localmente
 
@@ -163,7 +165,6 @@ mcp_server/server.py  MCP (stdio + HTTP)
 .mcp.json             registro do MCP (formato usado pelo Claude Code e outros clientes)
 prompts/observacao.md prompt de extração da IA
 tests/                78 testes + gabarito independente
-dados/                guias.csv, regras_convenio.json, dicionario.html (fictícios, da banca)
+dados/                guias.csv, regras_convenio.json, dicionario.html (fictícios, da prova)
 deploy/               systemd + Caddy + instalar.sh
-docs/                 DIARIO.md, PERGUNTAS.md, relatorio-terca.md
 ```

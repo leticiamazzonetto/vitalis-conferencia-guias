@@ -19,7 +19,7 @@ Brief entregue ao avaliador independente: comparar duas propostas, rodar os test
 ## 4. Camada de IA (20/09)
 > "observacao.py com claude-haiku-4-5, temperatura 0, JSON com chaves fixas, cache por hash do texto, timeout curto; sem chave ou erro devolve nao_lida=True; testes com dublê nos 5 casos reais."
 
-## 5. Esclarecimentos da banca aplicados (21/09)
+## 5. Esclarecimentos do Asafe (Expert Integrado) aplicados (21/09)
 > "1. Validade da autorização: o CSV só tem a data final. 2. Simula a conferência na data de lançamento; o prazo de envio conta da data do atendimento. 3. As 80 guias são o recorte de agosto. Confere o que a guia declara."
 
 Resultado: `data_ref` por guia = data de lançamento; validade máxima fora; sem inferência entre guias.
