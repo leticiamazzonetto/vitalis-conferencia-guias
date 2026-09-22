@@ -27,7 +27,7 @@ Três estados, nomeados pela ação da clínica:
 | **CORRIGIR** | Falta algo que a recepção resolve no sistema de gestão antes do envio | G-2608-0041: autorização verbal, lançar o número até 27/08 |
 | **NÃO ENVIAR** | O convênio não cobre (faturar particular), o paciente pediu particular, ou é cópia de outra guia (descartar) | G-2608-0002: consulta no Plano Bem |
 
-A correção acontece **no sistema de gestão** (que não vai ser trocado). A ferramenta não guarda a guia, guarda a decisão sobre ela. Depois de corrigir, a guia é conferida de novo e vira OK.
+A correção acontece **no sistema de gestão** (que não vai ser trocado). A ferramenta não substitui o sistema: guarda a conferência (a guia como foi lançada e a decisão sobre ela). Depois de corrigir, a guia é conferida de novo e vira OK.
 
 ## O que o site mostra (https://vitalis.geaia.com)
 
@@ -59,7 +59,7 @@ Relatório gerado pela ferramenta: `docs/relatorio-semanal.md` (e a página "Rel
 |---|---|
 | `consultar_regra(convenio, procedimento_codigo)` | o que o convênio exige e cobre, limite de sessões, prazo de envio, observação do convênio |
 | `verificar_guia(guia)` | decisão + motivos + correções + valores para uma guia como a recepção lançou |
-| `resumo_lote()` | os números do lote de agosto |
+| `resumo_lote()` | os números do conjunto atual: as 80 guias de agosto mais as importadas pelo site |
 
 Funciona com qualquer assistente que fale MCP: Claude, ChatGPT, Codex, Kimi, Cursor, Gemini, Claude Code e outros.
 
@@ -126,7 +126,7 @@ python -m unittest discover -s tests     # 80 testes: regras, sinais da IA (dubl
 python verificar_lote.py [--com-ia]      # lote de agosto; --com-ia lê as observações com o Haiku
 python gerar_relatorio.py                # docs/relatorio-semanal.md e .html
 ```
-Além dos testes: guia colada com data invertida, vírgula e observação de protocolo verbal pelo site público; cópia exata da G-0059 digitada como guia nova (tem de dar NÃO ENVIAR); reinício do serviço com o histórico preservado; MCP chamado por HTTPS de fora do servidor.
+Além dos testes: guia com data invertida, vírgula no valor e observação de protocolo verbal enviada pelo site público (formulário e CSV); cópia exata da G-0059 enviada como guia nova (tem de dar NÃO ENVIAR); reenvio do CSV das 80 guias reproduzindo o mesmo resultado do lote; reinício do serviço com as importações preservadas; MCP chamado por HTTPS de fora do servidor; Skill e MCP usados no Claude e no ChatGPT.
 
 ### Quanto tempo levou
 
