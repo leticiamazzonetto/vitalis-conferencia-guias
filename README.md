@@ -95,10 +95,10 @@ Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por 
 | Regras | `regras_convenio.json` é a fonte de verdade | Convênio novo = bloco novo no JSON, zero código. O limite de sessões digitado na guia só gera alerta se divergir. |
 | IA | Claude Haiku 4.5 via API, só na observação da recepção | Custa centavos (9 chamadas para 80 guias, com cache por texto). A IA marca caixinhas; a regra decide. Se a IA ficar indisponível (API fora do ar, chave inválida, sem crédito), a guia com observação não fica sem decisão: vai para CORRIGIR com o aviso "observação não lida pela IA (IA fora do ar no momento)", para leitura humana ou nova conferência quando a IA voltar. |
 | Site | Streamlit | Um arquivo, lido de cima para baixo. |
-| Histórico | SQLite em arquivo | 900 guias/mês não pedem banco gerenciado. Trocar por Postgres é uma classe (`app/armazenamento.py`). |
-| Hospedagem | Meu servidor (VPS) com Caddy e systemd | O site e o MCP rodam no meu servidor: o Caddy dá o endereço com HTTPS e o systemd mantém os dois serviços ligados. Assim o link fica sempre no ar e as guias importadas ficam guardadas. A chave da IA fica em `/etc/vitalis/env`, fora do repositório. A hospedagem gratuita do Streamlit foi considerada e descartada: serve para um MVP de demonstração, não para uso diário, porque não mantém o app ligado nem guarda dados. |
+| Histórico | SQLite em arquivo | Um arquivo no próprio servidor, sem servidor de banco para instalar ou manter. Suficiente para 900 guias por mês. |
+| Hospedagem | Meu servidor (VPS) com Caddy e systemd | O site e o MCP rodam no meu servidor: o Caddy dá o endereço com HTTPS e o systemd mantém os dois serviços ligados. Assim o link fica sempre no ar e as guias importadas ficam guardadas. A chave da IA fica em `/etc/vitalis/env`, fora do repositório. |
 | MCP | SDK oficial `mcp` (2.x), stdio + HTTP | Mesma função do site. Publicado por HTTP para testar sem instalar. |
-| Testes | `unittest` + gabarito independente | 78 testes: uma regra por teste, 5 casos reais de texto livre com dublê da IA, MCP de ponta a ponta, e o lote inteiro contra um gabarito gerado por uma implementação que **não** importa o motor. |
+| Testes | `unittest` + gabarito independente | 80 testes: uma regra por teste, 5 casos reais de texto livre com dublê da IA, MCP de ponta a ponta, e o lote inteiro contra um gabarito gerado por uma implementação que **não** importa o motor. |
 
 ### O que a IA gerou e o que eu mudei na mão
 
@@ -109,7 +109,7 @@ A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram 
 3. **Prazo de envio contado do atendimento até a data da conferência.** A fórmula original (lançamento − atendimento) nunca disparava. Seguindo o esclarecimento do Asafe (Expert Integrado), o lote de agosto é conferido na data de lançamento de cada guia; guia nova é conferida hoje.
 4. **Cópia de guia: uma vale, a outra não.** A original ganha aviso; a cópia vira NÃO ENVIAR com valor zero. Antes contava R$ 160 de risco que não existia.
 5. **Gabarito escrito fora do motor.** O teste das 80 guias compara o motor com `tests/gabarito.csv`, gerado por `tests/gerar_gabarito.py`, que reescreve as regras do zero sem importar o motor. Se os dois discordarem, o teste acusa.
-6. **Hospedar no meu servidor.** Vercel + Supabase eram over-engineering para esta ferramenta nesta fase de produção: acrescentariam plataforma serverless, banco gerenciado, framework web e camadas de acesso a dados sem ganho para 900 guias por mês. A solução final tem quatro peças: Python (as regras), Streamlit (as telas), SQLite (o histórico) e o meu servidor com Caddy e systemd (o site no ar com HTTPS).
+6. **Hospedar no meu servidor.** A IA tinha proposto a hospedagem gratuita do Streamlit, que serve para um MVP de demonstração, não para uso diário: não mantém o app ligado nem guarda dados. Vercel + Supabase eram over-engineering para esta ferramenta nesta fase de produção: acrescentariam plataforma serverless, banco gerenciado, framework web e camadas de acesso a dados sem ganho para 900 guias por mês. A solução final tem quatro peças: Python (as regras), Streamlit (as telas), SQLite (o histórico) e o meu servidor com Caddy e systemd (o site no ar com HTTPS).
 
 ### O que ficou de fora e por quê
 
@@ -122,7 +122,7 @@ A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram 
 ### Como testei
 
 ```bash
-python -m unittest discover -s tests     # 78 testes: regras, sinais da IA (dublê), gabarito das 80, MCP stdio
+python -m unittest discover -s tests     # 80 testes: regras, sinais da IA (dublê), gabarito das 80, MCP stdio
 python verificar_lote.py [--com-ia]      # lote de agosto; --com-ia lê as observações com o Haiku
 python gerar_relatorio.py                # docs/relatorio-semanal.md e .html
 ```
