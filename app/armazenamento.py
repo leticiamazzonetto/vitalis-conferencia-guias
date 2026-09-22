@@ -24,8 +24,16 @@ from datetime import datetime, timezone
 class Storage(ABC):
 
     @abstractmethod
-    def salvar_resultado(self, decisao: dict, origem: str = "app") -> int:
-        """Grava uma decisão no histórico. Devolve o id da linha."""
+    def salvar_resultado(self, decisao: dict, origem: str = "app", lote: str = "") -> int:
+        """Grava uma decisão. `lote` identifica a importação (arquivo + data). Devolve o id da linha."""
+
+    @abstractmethod
+    def listar_lotes(self) -> list:
+        """As importações feitas: [{lote, nome, quando, origem, quantidade}], mais nova primeiro."""
+
+    @abstractmethod
+    def apagar_lotes(self, lotes: list) -> int:
+        """Remove as guias das importações escolhidas. Devolve quantas linhas saíram."""
 
     @abstractmethod
     def listar(self, limite: int = 200) -> list:
@@ -80,16 +88,19 @@ class SQLiteStorage(Storage):
                 """
             )
             conn.execute("CREATE INDEX IF NOT EXISTS idx_chave ON conferencias(chave_dup)")
+            colunas = {r[1] for r in conn.execute("PRAGMA table_info(conferencias)").fetchall()}
+            if "lote" not in colunas:   # bancos criados antes desta coluna
+                conn.execute("ALTER TABLE conferencias ADD COLUMN lote TEXT NOT NULL DEFAULT ''")
             conn.commit()
 
-    def salvar_resultado(self, decisao: dict, origem: str = "app") -> int:
+    def salvar_resultado(self, decisao: dict, origem: str = "app", lote: str = "") -> int:
         with self._conectar() as conn:
             cur = conn.execute(
                 """
                 INSERT INTO conferencias
                     (criado_em, id_guia, convenio, decisao, urgente, valor_em_risco,
-                     valor_reclassificar, chave_dup, decisao_json, origem)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     valor_reclassificar, chave_dup, decisao_json, origem, lote)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -102,6 +113,7 @@ class SQLiteStorage(Storage):
                     json.dumps(list(decisao.get("chave_duplicata", [])), ensure_ascii=False),
                     json.dumps(decisao, ensure_ascii=False, default=str),
                     origem,
+                    lote,
                 ),
             )
             conn.commit()
@@ -143,6 +155,29 @@ class SQLiteStorage(Storage):
         return [l["id_guia"] for l in linhas if l["id_guia"]]
 
 
+    def listar_lotes(self) -> list:
+        with self._conectar() as conn:
+            linhas = conn.execute(
+                "SELECT lote, origem, MIN(criado_em) AS quando, COUNT(*) AS quantidade "
+                "FROM conferencias GROUP BY lote, origem ORDER BY lote DESC"
+            ).fetchall()
+        saida = []
+        for l in linhas:
+            nome = l["lote"].split("|", 1)[1] if "|" in (l["lote"] or "") else (l["lote"] or "(sem nome)")
+            saida.append({"lote": l["lote"], "nome": nome, "quando": l["quando"],
+                          "origem": l["origem"], "quantidade": l["quantidade"]})
+        return saida
+
+    def apagar_lotes(self, lotes: list) -> int:
+        if not lotes:
+            return 0
+        with self._conectar() as conn:
+            marcas = ",".join("?" for _ in lotes)
+            n = conn.execute(f"SELECT COUNT(*) FROM conferencias WHERE lote IN ({marcas})", list(lotes)).fetchone()[0]
+            conn.execute(f"DELETE FROM conferencias WHERE lote IN ({marcas})", list(lotes))
+            conn.commit()
+        return n
+
     def listar_importadas(self) -> list:
         with self._conectar() as conn:
             linhas = conn.execute(
@@ -152,7 +187,7 @@ class SQLiteStorage(Storage):
         saida = []
         for l in linhas:
             d = json.loads(l["decisao_json"] or "{}")
-            d.update({"id": l["id"], "criado_em": l["criado_em"], "origem": l["origem"]})
+            d.update({"id": l["id"], "criado_em": l["criado_em"], "origem": l["origem"], "lote": l["lote"]})
             saida.append(d)
         return saida
 

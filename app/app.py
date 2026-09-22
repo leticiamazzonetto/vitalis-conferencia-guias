@@ -230,11 +230,13 @@ def conferir(campos):
     return decisao
 
 
-def importar(decisoes, origem):
-    """Grava as decisões: a guia passa a fazer parte do painel, da lista e do relatório."""
+def importar(decisoes, origem, nome):
+    """Grava as decisões como uma importação (nome + data). A guia passa a fazer parte do painel."""
+    from datetime import datetime, timezone
+    lote = f"{datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S')}|{nome}"
     n = 0
     for d in decisoes:
-        storage().salvar_resultado(d, origem=origem)
+        storage().salvar_resultado(d, origem=origem, lote=lote)
         n += 1
     return n
 
@@ -556,7 +558,7 @@ elif pagina == "Conferir guia":
             if d_form:
                 mostrar_decisao(d_form)
                 if st.button("Importar para o painel", key="imp_form", type="primary"):
-                    importar([d_form], "formulario")
+                    importar([d_form], "formulario", f"formulário · {d_form['id_guia']}")
                     st.session_state.pop("conf_form", None)
                     st.success(f"{d_form['id_guia']} importada. Já aparece no Painel, na Lista de correções e no Relatório.")
                     st.rerun()
@@ -581,7 +583,7 @@ elif pagina == "Conferir guia":
             if d_txt:
                 mostrar_decisao(d_txt)
                 if st.button("Importar para o painel", key="imp_texto", type="primary"):
-                    importar([d_txt], "texto")
+                    importar([d_txt], "texto", f"texto colado · {d_txt['id_guia']}")
                     st.session_state.pop("conf_texto", None)
                     st.success(f"{d_txt['id_guia']} importada. Já aparece no Painel, na Lista de correções e no Relatório.")
                     st.rerun()
@@ -612,7 +614,7 @@ elif pagina == "Conferir guia":
                         "Por quê": " | ".join(d["motivos"]) or "", "O que fazer": " | ".join(d["correcoes"]) or "",
                     } for d in resultados]), use_container_width=True, hide_index=True)
                     if st.button(f"Importar as {len(resultados)} guias para o painel", key="imp_csv", type="primary"):
-                        n = importar(resultados, "csv")
+                        n = importar(resultados, "csv", arq.name)
                         st.session_state.pop("conf_csv", None)
                         st.session_state.pop("conf_csv_chave", None)
                         st.success(f"{n} guias importadas. Já aparecem no Painel, na Lista de correções e no Relatório.")
@@ -635,17 +637,29 @@ elif pagina == "Conferir guia":
                         + "</div>", unsafe_allow_html=True)
             if regs:
                 st.dataframe(pd.DataFrame([{
-                    "Quando (UTC)": x["criado_em"], "Origem": x["origem"], "Guia": x["id_guia"],
-                    "Convênio": x["convenio"], "Decisão": x["decisao"],
+                    "Quando (UTC)": x["criado_em"], "Importação": (x.get("lote") or "").split("|", 1)[-1],
+                    "Guia": x["id_guia"], "Convênio": x["convenio"], "Decisão": x["decisao"],
                     "Por quê": " | ".join(x.get("motivos", [])) or "",
                 } for x in regs]), use_container_width=True, hide_index=True)
             else:
                 st.info("Nenhuma guia importada ainda.")
-            with st.expander("Remover todas as guias importadas (o lote de agosto não muda)"):
-                confirmar = st.checkbox("Confirmo que quero remover todas as importadas", key="confirma_limpar")
-                if st.button("Remover importadas", disabled=not confirmar):
-                    n = storage().apagar_tudo()
-                    st.success(f"{n} registros removidos.")
+            st.markdown("### Remover guias importadas")
+            lotes = storage().listar_lotes()
+            if not lotes:
+                st.caption("Nenhuma importação para remover.")
+            else:
+                st.markdown("<p class='muted'>Marque as importações que quer remover. O lote de agosto não muda.</p>",
+                            unsafe_allow_html=True)
+                escolhidos = []
+                for lt in lotes:
+                    quando = lt["quando"].replace("T", " ")[:16] + " UTC"
+                    rotulo = f"{lt['nome']} · {quando} · {lt['quantidade']} guia{'s' if lt['quantidade'] != 1 else ''}"
+                    if st.checkbox(rotulo, key=f"rm_{lt['lote']}"):
+                        escolhidos.append(lt["lote"])
+                if st.button(f"Remover {len(escolhidos)} importação(ões) selecionada(s)", disabled=not escolhidos,
+                             type="primary"):
+                    n = storage().apagar_lotes(escolhidos)
+                    st.success(f"{n} guias removidas.")
                     st.rerun()
         except Exception as exc:  # noqa: BLE001
             bloco_erro_amigavel(exc)
