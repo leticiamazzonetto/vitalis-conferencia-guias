@@ -59,23 +59,29 @@ Relatório gerado pela ferramenta: `docs/relatorio-terca.md` (e a página "Relat
 | `verificar_guia(guia)` | decisão + motivos + correções + valores para uma guia como a recepção lançou |
 | `resumo_lote()` | os números do lote de agosto |
 
-**Instalar (local, stdio):**
+Funciona com qualquer assistente que fale MCP: Claude, ChatGPT, Codex, Kimi, Cursor, Gemini, Claude Code e outros.
+
+**Usar sem instalar (HTTP):** conecte o assistente a `https://vitalis.geaia.com/mcp` (transporte streamable HTTP, sem login). Em geral é "Conectores" ou "MCP servers" nas configurações do assistente. Exemplos:
+```bash
+claude mcp add --transport http vitalis-guias https://vitalis.geaia.com/mcp      # Claude Code
+```
+```json
+{ "mcpServers": { "vitalis-guias": { "url": "https://vitalis.geaia.com/mcp" } } }
+```
+(o bloco JSON acima é o formato de configuração de MCP usado por Claude Desktop, Cursor, Codex e a maioria dos clientes).
+
+**Servidor local (stdio):**
 ```bash
 pip install -r requirements.txt
-# no Claude Code: abra a pasta do repositório; o .mcp.json já registra o servidor. Ou:
-claude mcp add vitalis-guias -- python mcp_server/server.py
+python mcp_server/server.py          # registre este comando no seu assistente
 ```
-Claude Desktop (`claude_desktop_config.json`):
-```json
-{ "mcpServers": { "vitalis-guias": { "command": "python", "args": ["CAMINHO/mcp_server/server.py"] } } }
-```
-**Usar sem instalar (HTTP):** `https://vitalis.geaia.com/mcp` (transporte streamable HTTP; o mesmo servidor, rodando na VPS atrás do Caddy).
+No Claude Code o `.mcp.json` da raiz já registra; em outros clientes, use o arquivo de configuração de MCP deles com `command: python`, `args: ["mcp_server/server.py"]`.
 
 Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por stdio e chama as três ferramentas.
 
 ## Skill
 
-`.claude/skills/conferir-guia/SKILL.md`: a recepcionista cola a guia do jeito que saiu da tela ("SI, carteirinha 555123456, sessão musculoesquelética, atend 28/08, obs: autorizado por telefone, protocolo 990421"), a Skill monta os campos, chama `verificar_guia` no MCP e responde no formato fixo: selo, por quê, fazer. No Claude Code a Skill é descoberta ao abrir o repositório.
+`.claude/skills/conferir-guia/SKILL.md`: a recepcionista cola a guia do jeito que saiu da tela ("SI, carteirinha 555123456, sessão musculoesquelética, atend 28/08, obs: autorizado por telefone, protocolo 990421"), a Skill monta os campos, chama `verificar_guia` no MCP e responde no formato fixo: selo, por quê, fazer. É um arquivo de texto: anexe na conversa ou cole nas instruções do projeto, GPT ou agente de qualquer assistente (no Claude Code é descoberta ao abrir o repositório).
 
 ## Como fiz
 
@@ -154,7 +160,7 @@ gerar_relatorio.py    relatório semanal (md + html)
 app/app.py            site (Streamlit)  ·  app/armazenamento.py  histórico (SQLite)
 mcp_server/server.py  MCP (stdio + HTTP)
 .claude/skills/conferir-guia/SKILL.md   Skill
-.mcp.json             registro do MCP para o Claude Code
+.mcp.json             registro do MCP (formato usado pelo Claude Code e outros clientes)
 prompts/observacao.md prompt de extração da IA
 tests/                78 testes + gabarito independente
 dados/                guias.csv, regras_convenio.json, dicionario.html (fictícios, da banca)

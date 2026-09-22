@@ -90,6 +90,15 @@ Regras da resposta:
 
 ## Onde isto roda
 
-- MCP local: abra o repositório no Claude Code (o `.mcp.json` da raiz já registra o servidor) ou `claude mcp add vitalis-guias -- python mcp_server/server.py`.
-- MCP publicado: `https://vitalis.geaia.com/mcp` (transporte HTTP, sem instalar nada).
+Esta Skill funciona em qualquer assistente que fale MCP (Claude, ChatGPT, Codex, Kimi, Cursor, Gemini,
+Claude Code e outros). Ela só precisa que o servidor `vitalis-guias` esteja conectado ao assistente.
+
+- **Servidor publicado (sem instalar nada):** `https://vitalis.geaia.com/mcp`, transporte streamable HTTP,
+  sem login. Conecte pelo caminho do seu assistente: em geral "Conectores" ou "MCP servers" nas
+  configurações, colando esse endereço. No Claude Code: `claude mcp add --transport http vitalis-guias https://vitalis.geaia.com/mcp`.
+- **Servidor local (a partir do repositório):** `pip install -r requirements.txt` e registre o comando
+  `python mcp_server/server.py` (transporte stdio) no seu assistente. No Claude Code o arquivo `.mcp.json`
+  da raiz já faz isso; em outros clientes, use o equivalente do arquivo de configuração de MCP deles.
+- Esta Skill é um arquivo de texto: anexe-o na conversa ou cole o conteúdo nas instruções do seu
+  projeto, GPT, agente ou espaço de trabalho. Não depende de nenhum recurso exclusivo de um fornecedor.
 - A regra é uma só: `motor.py`. O site, o MCP e esta Skill usam a mesma função.
