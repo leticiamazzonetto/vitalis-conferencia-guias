@@ -165,7 +165,7 @@ mcp_server/server.py  MCP (stdio + HTTP)
 .claude/skills/conferir-guia/SKILL.md   Skill
 .mcp.json             registro do MCP (formato usado pelo Claude Code e outros clientes)
 prompts/observacao.md instrução que a IA recebe  ·  prompts/construcao.md  prompts usados na construção
-tests/                78 testes + gabarito.csv gerado por gerar_gabarito.py (não importa o motor)
+tests/                80 testes + gabarito.csv gerado por gerar_gabarito.py (não importa o motor)
 dados/                guias.csv (80 guias de agosto) e regras_convenio.json (fictícios, da prova)
 docs/                 llms.md (texto para assistentes), modelo-guias.csv, relatorio-semanal.md/.html
 deploy/               vitalis.service, vitalis-mcp.service, Caddyfile.bloco, instalar.sh
