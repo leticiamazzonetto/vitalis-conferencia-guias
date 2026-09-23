@@ -68,6 +68,10 @@ st.markdown("""
   .kpi .v{font-size:1.7rem;font-weight:700;line-height:1.2;margin-top:2px;font-variant-numeric:tabular-nums}
   .kpi .s{font-size:.82rem;color:#5C6B66}
   .kpi.ok .v{color:#15803D}.kpi.corr .v{color:#B45309}.kpi.nao .v{color:#B91C1C}
+  .kpi.duplo{grid-column:span 2}
+  .kpi.duplo .partes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+  .kpi.duplo .partes .l{text-transform:none;letter-spacing:0;font-size:.78rem}
+  .kpi.duplo .partes .v{font-size:1.45rem}
   .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.8rem;font-weight:700}
   .pill.ok{background:#E5F4E9;color:#15803D}.pill.corr{background:#FDF1E3;color:#B45309}.pill.nao{background:#FCE8E8;color:#B91C1C}
   .box{background:#F3F6F5;border-radius:10px;padding:14px 16px;border:1px solid #E3EAE7}
@@ -132,6 +136,14 @@ def kpi(label, valor, sub="", classe="", ajuda=""):
     dica = f' title="{ajuda}"' if ajuda else ""
     return (f'<div class="kpi {classe}"{dica}><div class="l">{label}{" ⓘ" if ajuda else ""}</div>'
             f'<div class="v">{valor}</div><div class="s">{sub}</div></div>')
+
+
+def kpi_duplo(label, ajuda, partes):
+    """Cartão com um título e duas partes lado a lado. partes = [(label, valor, sub, ajuda), ...]."""
+    cab = f'<div class="l" title="{ajuda}">{label} ⓘ</div>'
+    corpo = "".join(f'<div title="{a}"><div class="l">{l} ⓘ</div><div class="v">{v}</div><div class="s">{sb}</div></div>'
+                    for l, v, sb, a in partes)
+    return f'<div class="kpi nao duplo">{cab}<div class="partes">{corpo}</div></div>'
 
 
 def bloco_erro_amigavel(exc):
@@ -324,8 +336,9 @@ if pagina == "Painel":
         reclass = float(f["R$ reclassificar"].sum())   # cópias valem 0: não é dinheiro a reclassificar
         ok_valor = float(f.loc[f["Decisão"] == OK, "Valor"].sum())
         total_valor = float(f["Valor"].sum())             # valor declarado nas guias, cópias incluídas
-        soma_cartoes = ok_valor + risco + reclass          # cópia vale 0 nas decisões
-        n_copias = int(f["_tipos"].apply(lambda t: "cópia de outra guia" in t).sum())
+        _eh_copia = f["_tipos"].apply(lambda t: "cópia de outra guia" in t)
+        n_copias = int(_eh_copia.sum())
+        dup_valor = float(f.loc[_eh_copia, "Valor"].sum())    # valor declarado das cópias (vale 0 nas decisões)
         urg_valor = float(f.loc[f["_urgente"], "Valor"].sum())
         st.markdown('<div class="kpis">'
                     + kpi("Guias conferidas", len(f), f"{moeda(total_valor)} · 80 de agosto + {n_importadas} importadas"
@@ -334,14 +347,14 @@ if pagina == "Painel":
                           "Guias sem nenhum problema. Podem ir ao convênio.")
                     + kpi("Corrigir", n_co, f"{moeda(risco)} recuperáveis se corrigidas", "corr",
                           "Falta algo que a recepção resolve no sistema antes do envio. O valor entra se corrigir.")
-                    + kpi("Não enviar", n_ne, f"{moeda(reclass)} a faturar como particular", "nao",
-                          "O convênio não cobre, o paciente pediu particular, ou é cópia de outra guia.")
+                    + kpi_duplo("Não enviar", "Guias que não devem ser enviadas ao convênio.", [
+                          ("Particular", n_ne - n_copias, f"{moeda(reclass)} a faturar como particular",
+                           "Convênio não cobre ou o paciente pediu para faturar no particular."),
+                          ("Duplicadas", n_copias, f"{moeda(dup_valor)} em duplicidade",
+                           "Essas guias são cópias de outras guias. Enviá-las ao convênio seria cobrar o mesmo "
+                           "atendimento duas vezes. Elas entram no total pelo valor declarado, mas valem zero nas decisões.")])
                     + kpi("Prazo de envio ≤ 7 dias", int(f["_urgente"].sum()), f"{moeda(urg_valor)} a enviar primeiro", "",
                           "Cada guia tem 30 ou 45 dias, contados do atendimento, para chegar ao convênio.")
-                    + kpi("Guias duplicadas", n_copias, f"{moeda(total_valor - soma_cartoes)} em duplicidade", "",
-                          "Essas guias são cópias de outras guias. Elas entram no total pelo valor declarado, mas valem "
-                          "zero nas decisões: enviá-las ao convênio seria cobrar o mesmo atendimento duas vezes. "
-                          "Por isso OK + Corrigir + Não enviar somam menos que o total.")
                     + "</div>", unsafe_allow_html=True)
         col_tab, col_lat = st.columns([3, 1], gap="large")
         with col_lat:
