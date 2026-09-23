@@ -98,7 +98,7 @@ Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por 
 | Histórico | SQLite em arquivo | Um arquivo no próprio servidor, sem servidor de banco para instalar ou manter. Suficiente para 900 guias por mês. |
 | Hospedagem | Meu servidor (VPS) com Caddy e systemd | O site e o MCP rodam no meu servidor: o Caddy dá o endereço com HTTPS e o systemd mantém os dois serviços ligados. Assim o link fica sempre no ar e as guias importadas ficam guardadas. A chave da IA fica em `/etc/vitalis/env`, fora do repositório. |
 | MCP | SDK oficial `mcp` (2.x), stdio + HTTP | Mesma função do site. Publicado por HTTP para testar sem instalar. |
-| Testes | `unittest` + gabarito independente | 80 testes: uma regra por teste, 5 casos reais de texto livre com dublê da IA, MCP de ponta a ponta, e o lote inteiro contra um gabarito gerado por uma implementação que **não** importa o motor. |
+| Testes | `unittest` + gabarito independente | Testes automáticos que valem para qualquer guia, venha do formulário, do CSV, do MCP ou, no futuro, da API do sistema de gestão: todas passam pelo mesmo motor, e é o motor que os testes cobrem. Há um teste para cada regra de convênio; testes dos casos em que a observação da recepção muda a decisão, com a IA substituída por um dublê que devolve a resposta esperada; e o MCP subindo de verdade e sendo chamado como um assistente faria. A amostra de agosto entra como conferência final: cada guia dela é comparada com um gabarito gerado por um segundo programa que reescreve as regras sem usar o motor. Hoje são 80 testes; regra nova, teste novo. |
 
 ### O que a IA gerou e o que eu mudei na mão
 
@@ -128,7 +128,7 @@ A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram 
 ### Como testei
 
 ```bash
-python -m unittest discover -s tests     # 80 testes: regras, sinais da IA (dublê), gabarito das 80, MCP stdio
+python -m unittest discover -s tests     # testes automáticos: regras, sinais da IA (dublê), gabarito da amostra, MCP
 python verificar_lote.py [--com-ia]      # lote de agosto; --com-ia lê as observações com o Haiku
 python gerar_relatorio.py                # docs/relatorio-semanal.md e .html
 ```
@@ -171,7 +171,7 @@ mcp_server/server.py  MCP (stdio + HTTP)
 .claude/skills/conferir-guia/SKILL.md   Skill
 .mcp.json             registro do MCP (formato usado pelo Claude Code e outros clientes)
 prompts/observacao.md instrução que a IA recebe  ·  prompts/construcao.md  prompts usados na construção
-tests/                80 testes + gabarito.csv gerado por gerar_gabarito.py (não importa o motor)
+tests/                testes automáticos + gabarito.csv gerado por gerar_gabarito.py (não importa o motor)
 dados/                guias.csv (80 guias de agosto) e regras_convenio.json (fictícios, da prova)
 docs/                 llms.md (texto para assistentes), modelo-guias.csv, relatorio-semanal.md/.html
 deploy/               vitalis.service, vitalis-mcp.service, Caddyfile.bloco, instalar.sh
