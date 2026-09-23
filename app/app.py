@@ -323,7 +323,9 @@ if pagina == "Painel":
         risco = float(f["R$ em risco"].sum())
         reclass = float(f["R$ reclassificar"].sum())   # cópias valem 0: não é dinheiro a reclassificar
         ok_valor = float(f.loc[f["Decisão"] == OK, "Valor"].sum())
-        total_valor = ok_valor + risco + reclass   # mesma base dos três cartões: cópia vale 0
+        total_valor = float(f["Valor"].sum())             # valor declarado nas guias, cópias incluídas
+        soma_cartoes = ok_valor + risco + reclass          # cópia vale 0 nas decisões
+        n_copias = int(f["Por quê"].str.contains("cópia de outra guia", case=False, na=False).sum())
         urg_valor = float(f.loc[f["_urgente"], "Valor"].sum())
         st.markdown('<div class="kpis">'
                     + kpi("Guias conferidas", len(f), f"{moeda(total_valor)} · 80 de agosto + {n_importadas} importadas"
@@ -337,6 +339,12 @@ if pagina == "Painel":
                     + kpi("Prazo de envio ≤ 7 dias", int(f["_urgente"].sum()), f"{moeda(urg_valor)} a enviar primeiro", "",
                           "Cada guia tem 30 ou 45 dias, contados do atendimento, para chegar ao convênio.")
                     + "</div>", unsafe_allow_html=True)
+        if total_valor - soma_cartoes > 0.005:
+            st.markdown(f"<p class='muted'>Por que OK + Corrigir + Não enviar somam {moeda(soma_cartoes)}, e não "
+                        f"{moeda(total_valor)}: {n_copias} guia{'s' if n_copias != 1 else ''} "
+                        f"{'são cópias' if n_copias != 1 else 'é cópia'} de outra guia. Elas entram no total pelo valor "
+                        f"declarado ({moeda(total_valor - soma_cartoes)}), mas valem R\$ 0 nas decisões: enviar seria "
+                        f"cobrar o mesmo atendimento duas vezes.</p>", unsafe_allow_html=True)
 
         col_tab, col_lat = st.columns([3, 1], gap="large")
         with col_lat:
