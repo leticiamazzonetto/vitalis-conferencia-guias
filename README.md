@@ -91,6 +91,7 @@ Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por 
 
 | Peça | Escolha | Por quê |
 |---|---|---|
+| Construção | Claude Code (vibecoding) | A IA escreveu a maior parte do código a partir das minhas decisões; o que mudei na mão está na seção seguinte. |
 | Linguagem | Python 3, biblioteca padrão no núcleo | Uma regra é uma linha legível. Sem framework para explicar. |
 | Regras | `regras_convenio.json` é a fonte de verdade | Convênio novo = bloco novo no JSON, zero código. O limite de sessões digitado na guia só gera alerta se divergir. |
 | IA | Claude Haiku 4.5 via API, só na observação da recepção | Custa centavos (9 chamadas para 80 guias, com cache por texto). A IA marca caixinhas; a regra decide. Se a IA ficar indisponível (API fora do ar, chave inválida, sem crédito), a guia com observação não fica sem decisão: vai para CORRIGIR com o aviso "observação não lida pela IA (IA fora do ar no momento)", para leitura humana ou nova conferência quando a IA voltar. |
