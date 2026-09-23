@@ -347,14 +347,14 @@ if pagina == "Painel":
                           "Guias sem nenhum problema. Podem ir ao convênio.")
                     + kpi("Corrigir", n_co, f"{moeda(risco)} recuperáveis se corrigidas", "corr",
                           "Falta algo que a recepção resolve no sistema antes do envio. O valor entra se corrigir.")
+                    + kpi("Prazo de envio ≤ 7 dias", int(f["_urgente"].sum()), f"{moeda(urg_valor)} a enviar primeiro", "",
+                          "Cada guia tem 30 ou 45 dias, contados do atendimento, para chegar ao convênio.")
                     + kpi_duplo("Não enviar", "Guias que não devem ser enviadas ao convênio.", [
                           ("Particular", n_ne - n_copias, f"{moeda(reclass)} a faturar como particular",
                            "Convênio não cobre ou o paciente pediu para faturar no particular."),
                           ("Duplicadas", n_copias, f"{moeda(dup_valor)} em duplicidade",
                            "Essas guias são cópias de outras guias. Enviá-las ao convênio seria cobrar o mesmo "
                            "atendimento duas vezes. Elas entram no total pelo valor declarado, mas valem zero nas decisões.")])
-                    + kpi("Prazo de envio ≤ 7 dias", int(f["_urgente"].sum()), f"{moeda(urg_valor)} a enviar primeiro", "",
-                          "Cada guia tem 30 ou 45 dias, contados do atendimento, para chegar ao convênio.")
                     + "</div>", unsafe_allow_html=True)
         col_tab, col_lat = st.columns([3, 1], gap="large")
         with col_lat:
