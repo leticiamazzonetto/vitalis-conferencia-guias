@@ -128,8 +128,18 @@ A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram 
 
 ### Como testei
 
+**80 testes automáticos.** Um teste automático é um pedaço de código que faz uma pergunta ao motor e confere se a resposta é a esperada (exemplo: "guia da Vitalcard com autorização vencida ontem tem de dar CORRIGIR"). Se alguém mexer numa regra e quebrar isso, o teste acusa sozinho. Os 80 rodam em cerca de 20 segundos; a coincidência com as 80 guias é só coincidência.
+
+| Arquivo | Testes | O que confere |
+|---|---:|---|
+| `tests/test_verificador.py` | 51 | Uma pergunta por regra de convênio: prazo, validade, sessões, campos obrigatórios, cópias, códigos |
+| `tests/test_observacao.py` | 17 | Os casos em que o bilhete da recepção muda a decisão, com a IA substituída por um dublê que responde fixo |
+| `tests/test_mcp.py` | 7 | O MCP sobe de verdade e as ferramentas respondem certo |
+| `tests/test_gabarito.py` | 3 | As 80 guias comparadas com um gabarito feito por um segundo programa, que reescreve as regras sem usar o motor |
+| `tests/test_reenvio.py` | 2 | Reenviar o mesmo CSV reproduz o lote, sem duplicar |
+
 ```bash
-python -m unittest discover -s tests     # testes automáticos: regras, sinais da IA (dublê), gabarito da amostra, MCP
+python -m unittest discover -s tests     # roda os 80 testes
 python verificar_lote.py [--csv arquivo] [--com-ia]   # confere um CSV inteiro (padrão: a amostra de agosto); --com-ia liga a IA
 python gerar_relatorio.py                # docs/relatorio-semanal.md e .html
 ```
