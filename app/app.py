@@ -322,15 +322,12 @@ if pagina == "Painel":
         n_ok = int((f["Decisão"] == OK).sum()); n_co = int((f["Decisão"] == CORRIGIR).sum()); n_ne = int((f["Decisão"] == NAO_ENVIAR).sum())
         risco = float(f["R$ em risco"].sum())
         reclass = float(f["R$ reclassificar"].sum())   # cópias valem 0: não é dinheiro a reclassificar
-        total_valor = float(f["Valor"].sum())
         ok_valor = float(f.loc[f["Decisão"] == OK, "Valor"].sum())
+        total_valor = ok_valor + risco + reclass   # mesma base dos três cartões: cópia vale 0
         urg_valor = float(f.loc[f["_urgente"], "Valor"].sum())
         st.markdown('<div class="kpis">'
                     + kpi("Guias conferidas", len(f), f"{moeda(total_valor)} · 80 de agosto + {n_importadas} importadas"
-                          if not filtrado else f"{moeda(total_valor)} no recorte", "",
-                          f"Soma do valor declarado em todas as guias. Cópias de outra guia entram aqui pelo valor "
-                          f"declarado, mas valem R$ 0 nas decisões: por isso OK + Corrigir + Não enviar somam "
-                          f"{moeda(ok_valor + risco + reclass)}.")
+                          if not filtrado else f"{moeda(total_valor)} no recorte")
                     + kpi("OK", n_ok, f"{moeda(ok_valor)} prontos para envio", "ok",
                           "Guias sem nenhum problema. Podem ir ao convênio.")
                     + kpi("Corrigir", n_co, f"{moeda(risco)} recuperáveis se corrigidas", "corr",
