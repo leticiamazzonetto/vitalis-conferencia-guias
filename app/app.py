@@ -905,7 +905,19 @@ else:
                     "Quem usa o resultado é a regra acima. A IA nunca inventa: sem data no texto, a data fica vazia; "
                     "na dúvida, não marca, e a guia vai para revisão humana. Se a IA estiver fora do ar, a guia recebe "
                     "o aviso \"observação não lida\" e vai para CORRIGIR.</p>", unsafe_allow_html=True)
+        _caixinhas = [
+            ("autorizacao_nova", "Existe autorização nova ou renovada", "“autorização nova, validade 30/09”"),
+            ("validade_nova", "A data dessa autorização nova", "idem, vira 2026-09-30"),
+            ("numero_pendente", "O número da autorização ainda não foi lançado", "“aguardando número do convênio”"),
+            ("protocolo_verbal", "Número do protocolo de autorização por telefone", "“liberado por telefone, protocolo 4471”"),
+            ("faturar_particular", "Paciente pediu para não usar o convênio", "“paciente vai pagar particular”"),
+            ("codigo_errado", "O procedimento lançado não é o realizado", "“lançou consulta mas foi sessão”"),
+            ("procedimento_real", "Qual foi o procedimento de verdade, se citado", "idem"),
+            ("remarcada_de", "Data original de uma sessão remarcada", "“remarcada do dia 12/08”"),
+            ("irrelevante", "O bilhete não muda nada na guia", "“paciente atrasou 10 min”, “pediu recibo”"),
+        ]
+        _linhas = "".join(f"<tr><td><code>{c}</code></td><td>{o}</td><td class='muted'>{e}</td></tr>" for c, o, e in _caixinhas)
         st.markdown("<table class='caixinhas'><thead><tr><th>Caixinha</th><th>O que marca</th><th>Exemplo do bilhete</th></tr></thead>"
-                    "<tbody><tr><td><code>autorizacao_nova</code></td><td>Existe autorização nova ou renovada</td><td class='muted'>"autorização nova, validade 30/09"</td></tr><tr><td><code>validade_nova</code></td><td>A data dessa autorização nova</td><td class='muted'>idem, vira 2026-09-30</td></tr><tr><td><code>numero_pendente</code></td><td>O número da autorização ainda não foi lançado</td><td class='muted'>"aguardando número do convênio"</td></tr><tr><td><code>protocolo_verbal</code></td><td>Número do protocolo de autorização por telefone</td><td class='muted'>"liberado por telefone, protocolo 4471"</td></tr><tr><td><code>faturar_particular</code></td><td>Paciente pediu para não usar o convênio</td><td class='muted'>"paciente vai pagar particular"</td></tr><tr><td><code>codigo_errado</code></td><td>O procedimento lançado não é o realizado</td><td class='muted'>"lançou consulta mas foi sessão"</td></tr><tr><td><code>procedimento_real</code></td><td>Qual foi o procedimento de verdade, se citado</td><td class='muted'>idem</td></tr><tr><td><code>remarcada_de</code></td><td>Data original de uma sessão remarcada</td><td class='muted'>"remarcada do dia 12/08"</td></tr><tr><td><code>irrelevante</code></td><td>O bilhete não muda nada na guia</td><td class='muted'>"paciente atrasou 10 min", "pediu recibo"</td></tr></tbody></table>", unsafe_allow_html=True)
+                    f"<tbody>{_linhas}</tbody></table>", unsafe_allow_html=True)
     except Exception as exc:  # noqa: BLE001
         bloco_erro_amigavel(exc)
