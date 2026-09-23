@@ -155,7 +155,7 @@ Para ligar a IA, defina a variável de ambiente `ANTHROPIC_API_KEY` antes de rod
 
 ## Publicar na VPS
 
-`deploy/instalar.sh` (usuário próprio, venv, testes, dois serviços systemd: site na porta 8502 e MCP na 8503, ambos só locais), `deploy/Caddyfile.bloco` (HTTPS automático e as duas rotas). A chave da IA nunca entra no repositório: fica num arquivo privado do servidor (`/etc/vitalis/env`), com permissão `640`, que só o administrador do servidor e o serviço da ferramenta conseguem ler.
+`deploy/instalar.sh` (usuário próprio, venv, testes, dois serviços systemd: site na porta 8502 e MCP na 8503, ambos só locais), `deploy/Caddyfile.bloco` (HTTPS automático e as duas rotas). A chave da IA nunca entra no repositório: fica num arquivo privado do servidor (`/etc/vitalis/env`), com permissão restrita, que só o administrador do servidor e o serviço da ferramenta conseguem ler.
 
 ## Estrutura
 
