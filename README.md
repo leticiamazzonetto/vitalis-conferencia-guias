@@ -101,6 +101,22 @@ Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por 
 | MCP | SDK oficial `mcp` (2.x), stdio + HTTP | Mesma função do site. Publicado por HTTP para testar sem instalar. |
 | Testes | `unittest` + gabarito independente | Testes automáticos que valem para qualquer guia, venha do formulário, do CSV, do MCP ou, no futuro, da API do sistema de gestão: todas passam pelo mesmo motor, e é o motor que os testes cobrem. Há um teste para cada regra de convênio; testes dos casos em que a observação da recepção muda a decisão, com a IA substituída por um dublê que devolve a resposta esperada; e o MCP subindo de verdade e sendo chamado como um assistente faria. A amostra de agosto entra como conferência final: cada guia dela é comparada com um gabarito gerado por um segundo programa que reescreve as regras sem usar o motor. Hoje são 80 testes; regra nova, teste novo. |
 
+**As 9 caixinhas que a IA marca** ao ler a observação da recepção (prompt em `prompts/observacao.md`). A IA só preenche; quem usa o resultado é a regra.
+
+| Caixinha | O que marca | Exemplo do bilhete |
+|---|---|---|
+| `autorizacao_nova` | Existe autorização nova ou renovada | "autorização nova, validade 30/09" |
+| `validade_nova` | A data dessa autorização nova | idem, vira 2026-09-30 |
+| `numero_pendente` | O número da autorização ainda não foi lançado | "aguardando número do convênio" |
+| `protocolo_verbal` | Número do protocolo de autorização por telefone | "liberado por telefone, protocolo 4471" |
+| `faturar_particular` | Paciente pediu para não usar o convênio | "paciente vai pagar particular" |
+| `codigo_errado` | O procedimento lançado não é o realizado | "lançou consulta mas foi sessão" |
+| `procedimento_real` | Qual foi o procedimento de verdade, se citado | idem |
+| `remarcada_de` | Data original de uma sessão remarcada | "remarcada do dia 12/08" |
+| `irrelevante` | O bilhete não muda nada na guia | "paciente atrasou 10 min", "pediu recibo" |
+
+Três regras: a IA nunca inventa (sem data no texto, a data fica vazia; na dúvida, não marca, e a guia vai para revisão humana); temperatura zero e cache por texto (a mesma frase dá sempre a mesma resposta, e frase repetida não gera chamada nova); e, se a IA cair, o sistema marca "não lida", que não é caixinha da IA: é o aviso de que ninguém leu o bilhete, e a guia vai para CORRIGIR.
+
 ### O que a IA gerou e o que eu mudei na mão
 
 A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram o que a IA tinha proposto:

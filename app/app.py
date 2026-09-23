@@ -68,6 +68,9 @@ st.markdown("""
   .kpi .v{font-size:1.7rem;font-weight:700;line-height:1.2;margin-top:2px;font-variant-numeric:tabular-nums}
   .kpi .s{font-size:.82rem;color:#5C6B66}
   .kpi.ok .v{color:#15803D}.kpi.corr .v{color:#B45309}.kpi.nao .v{color:#B91C1C}
+  table.caixinhas{width:100%;border-collapse:collapse;font-size:.9rem;margin:.3rem 0 1rem}
+  table.caixinhas th,table.caixinhas td{text-align:left;padding:6px 10px;border-bottom:1px solid #E5E7EB;vertical-align:top}
+  table.caixinhas th{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:#5C6B66}
   .kpi.duplo{grid-column:span 2}
   .kpi.duplo .partes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
   .kpi.duplo .partes .l{text-transform:none;letter-spacing:0;font-size:.78rem}
@@ -897,5 +900,12 @@ else:
                         + "".join(f"<p>{'🟢' if c in info['procedimentos_cobertos'] else '🔴'} {c} · {p['descricao']} · {moeda(p['valor_referencia'])}</p>"
                                   for c, p in procs.items())
                         + "</div>", unsafe_allow_html=True)
+        st.markdown("### As 9 caixinhas que a IA marca na observação da recepção")
+        st.markdown("<p class='muted'>A IA só lê o bilhete da recepção e preenche estas marcas, sempre as mesmas. "
+                    "Quem usa o resultado é a regra acima. A IA nunca inventa: sem data no texto, a data fica vazia; "
+                    "na dúvida, não marca, e a guia vai para revisão humana. Se a IA estiver fora do ar, a guia recebe "
+                    "o aviso \"observação não lida\" e vai para CORRIGIR.</p>", unsafe_allow_html=True)
+        st.markdown("<table class='caixinhas'><thead><tr><th>Caixinha</th><th>O que marca</th><th>Exemplo do bilhete</th></tr></thead>"
+                    "<tbody><tr><td><code>autorizacao_nova</code></td><td>Existe autorização nova ou renovada</td><td class='muted'>"autorização nova, validade 30/09"</td></tr><tr><td><code>validade_nova</code></td><td>A data dessa autorização nova</td><td class='muted'>idem, vira 2026-09-30</td></tr><tr><td><code>numero_pendente</code></td><td>O número da autorização ainda não foi lançado</td><td class='muted'>"aguardando número do convênio"</td></tr><tr><td><code>protocolo_verbal</code></td><td>Número do protocolo de autorização por telefone</td><td class='muted'>"liberado por telefone, protocolo 4471"</td></tr><tr><td><code>faturar_particular</code></td><td>Paciente pediu para não usar o convênio</td><td class='muted'>"paciente vai pagar particular"</td></tr><tr><td><code>codigo_errado</code></td><td>O procedimento lançado não é o realizado</td><td class='muted'>"lançou consulta mas foi sessão"</td></tr><tr><td><code>procedimento_real</code></td><td>Qual foi o procedimento de verdade, se citado</td><td class='muted'>idem</td></tr><tr><td><code>remarcada_de</code></td><td>Data original de uma sessão remarcada</td><td class='muted'>"remarcada do dia 12/08"</td></tr><tr><td><code>irrelevante</code></td><td>O bilhete não muda nada na guia</td><td class='muted'>"paciente atrasou 10 min", "pediu recibo"</td></tr></tbody></table>", unsafe_allow_html=True)
     except Exception as exc:  # noqa: BLE001
         bloco_erro_amigavel(exc)
