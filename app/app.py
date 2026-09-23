@@ -327,7 +327,10 @@ if pagina == "Painel":
         urg_valor = float(f.loc[f["_urgente"], "Valor"].sum())
         st.markdown('<div class="kpis">'
                     + kpi("Guias conferidas", len(f), f"{moeda(total_valor)} · 80 de agosto + {n_importadas} importadas"
-                          if not filtrado else f"{moeda(total_valor)} no recorte")
+                          if not filtrado else f"{moeda(total_valor)} no recorte", "",
+                          f"Soma do valor declarado em todas as guias. Cópias de outra guia entram aqui pelo valor "
+                          f"declarado, mas valem R$ 0 nas decisões: por isso OK + Corrigir + Não enviar somam "
+                          f"{moeda(ok_valor + risco + reclass)}.")
                     + kpi("OK", n_ok, f"{moeda(ok_valor)} prontos para envio", "ok",
                           "Guias sem nenhum problema. Podem ir ao convênio.")
                     + kpi("Corrigir", n_co, f"{moeda(risco)} recuperáveis se corrigidas", "corr",
@@ -690,7 +693,7 @@ elif pagina == "MCP":
         LLMS_MD = b""
 
     st.markdown("# Conectar o fiscal ao seu assistente de IA")
-    st.markdown('<p class="sub">Um clique e o Claude, o ChatGPT ou o Cursor passam a conferir guias com as mesmas '
+    st.markdown('<p class="sub">Um clique e o Claude, o ChatGPT ou o Perplexity passam a conferir guias com as mesmas '
                 'regras deste site. Nada para instalar.</p>', unsafe_allow_html=True)
 
     b1, b2, b3, b4, b5 = st.columns(5)
@@ -721,8 +724,9 @@ elif pagina == "MCP":
                     "<p><b>Claude Code:</b> uma linha no terminal:</p></div>", unsafe_allow_html=True)
         st.code(f"claude mcp add --transport http vitalis-guias {MCP_URL}", language="bash")
         st.markdown("<div class='box'><h4>2. Dar ao assistente o roteiro da recepção (a Skill)</h4>"
-                    "<p>Baixe a Skill abaixo e anexe o arquivo na conversa, ou cole o conteúdo dele nas "
-                    "instruções do seu Projeto (Claude) ou do seu GPT (ChatGPT). Ela ensina o assistente a "
+                    "<p>Baixe a Skill abaixo e anexe o arquivo na conversa, cole o conteúdo dele nas "
+                    "instruções do seu Projeto (Claude) ou do seu GPT (ChatGPT), ou registre-o como skill do "
+                    "assistente com o nome <code>conferir-guia</code> e chame pelo nome. Ela ensina o assistente a "
                     "entender a guia colada de qualquer jeito e a responder sempre no mesmo formato.</p></div>",
                     unsafe_allow_html=True)
         try:
