@@ -338,14 +338,11 @@ if pagina == "Painel":
                           "O convênio não cobre, o paciente pediu particular, ou é cópia de outra guia.")
                     + kpi("Prazo de envio ≤ 7 dias", int(f["_urgente"].sum()), f"{moeda(urg_valor)} a enviar primeiro", "",
                           "Cada guia tem 30 ou 45 dias, contados do atendimento, para chegar ao convênio.")
+                    + kpi("Guias duplicadas", n_copias, f"{moeda(total_valor - soma_cartoes)} em duplicidade", "",
+                          "Essas guias são cópias de outras guias. Elas entram no total pelo valor declarado, mas valem "
+                          "zero nas decisões: enviá-las ao convênio seria cobrar o mesmo atendimento duas vezes. "
+                          "Por isso OK + Corrigir + Não enviar somam menos que o total.")
                     + "</div>", unsafe_allow_html=True)
-        if total_valor - soma_cartoes > 0.005:
-            st.markdown(f"<p class='muted'>Por que OK + Corrigir + Não enviar somam {moeda(soma_cartoes)}, e não "
-                        f"{moeda(total_valor)}: {n_copias} guia{'s' if n_copias != 1 else ''} "
-                        f"{'são cópias' if n_copias != 1 else 'é cópia'} de outra guia. Elas entram no total pelo valor "
-                        f"declarado ({moeda(total_valor - soma_cartoes)}), mas valem zero nas decisões: enviar seria "
-                        f"cobrar o mesmo atendimento duas vezes.</p>", unsafe_allow_html=True)
-
         col_tab, col_lat = st.columns([3, 1], gap="large")
         with col_lat:
             por_tipo = {}
