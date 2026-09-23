@@ -96,7 +96,7 @@ Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por 
 | IA | Claude Haiku 4.5 via API, só na observação da recepção | Custa centavos (9 chamadas para 80 guias, com cache por texto). A IA marca caixinhas; a regra decide. Se a IA ficar indisponível (API fora do ar, chave inválida, sem crédito), a guia com observação não fica sem decisão: vai para CORRIGIR com o aviso "observação não lida pela IA (IA fora do ar no momento)", para leitura humana ou nova conferência quando a IA voltar. |
 | Site | Streamlit | Biblioteca Python que transforma um script em site: telas, filtros, tabelas, formulário e upload de CSV sem escrever HTML nem JavaScript. Como o motor já é Python, o site chama a mesma função sem tradução, e o código da interface cabe num arquivo que eu leio de cima para baixo e explico. |
 | Histórico | SQLite em arquivo | Um arquivo no próprio servidor, sem servidor de banco para instalar ou manter. Suficiente para 900 guias por mês. |
-| Hospedagem | Meu servidor (VPS) com Caddy e systemd | O site e o MCP rodam no meu servidor: o Caddy dá o endereço com HTTPS e o systemd mantém os dois serviços ligados. Assim o link fica sempre no ar e as guias importadas ficam guardadas. A chave da IA fica em `/etc/vitalis/env`, fora do repositório. |
+| Hospedagem | Meu servidor (VPS) com Caddy e systemd | O site e o MCP rodam no meu servidor: o Caddy dá o endereço com HTTPS e o systemd mantém os dois serviços ligados. Assim o link fica sempre no ar e as guias importadas ficam guardadas. A chave da IA nunca entra no repositório: fica num arquivo privado do servidor (`/etc/vitalis/env`), que só o administrador e o serviço da ferramenta conseguem ler. |
 | MCP | SDK oficial `mcp` (2.x), stdio + HTTP | Mesma função do site. Publicado por HTTP para testar sem instalar. |
 | Testes | `unittest` + gabarito independente | Testes automáticos que valem para qualquer guia, venha do formulário, do CSV, do MCP ou, no futuro, da API do sistema de gestão: todas passam pelo mesmo motor, e é o motor que os testes cobrem. Há um teste para cada regra de convênio; testes dos casos em que a observação da recepção muda a decisão, com a IA substituída por um dublê que devolve a resposta esperada; e o MCP subindo de verdade e sendo chamado como um assistente faria. A amostra de agosto entra como conferência final: cada guia dela é comparada com um gabarito gerado por um segundo programa que reescreve as regras sem usar o motor. Hoje são 80 testes; regra nova, teste novo. |
 
@@ -151,11 +151,11 @@ python -m venv .venv && .venv/Scripts/activate      # Windows; no Linux: source 
 pip install -r requirements.txt
 streamlit run app/app.py
 ```
-Para ligar a IA, defina a variável de ambiente `ANTHROPIC_API_KEY` antes de rodar (Windows: `set ANTHROPIC_API_KEY=...`; Linux/macOS: `export ANTHROPIC_API_KEY=...`). Sem ela, o site roda com a IA desligada: observações vão para leitura humana. O arquivo `.env.example` só documenta o nome da variável; na VPS ela fica em `/etc/vitalis/env`.
+Para ligar a IA, defina a variável de ambiente `ANTHROPIC_API_KEY` antes de rodar (Windows: `set ANTHROPIC_API_KEY=...`; Linux/macOS: `export ANTHROPIC_API_KEY=...`). Sem ela, o site roda com a IA desligada: observações vão para leitura humana. O arquivo `.env.example` só documenta o nome da variável, sem valor; na VPS a chave fica num arquivo privado do servidor (`/etc/vitalis/env`), fora do repositório.
 
 ## Publicar na VPS
 
-`deploy/instalar.sh` (usuário próprio, venv, testes, dois serviços systemd: site na porta 8502 e MCP na 8503, ambos só locais), `deploy/Caddyfile.bloco` (HTTPS automático e as duas rotas). A chave fica em `/etc/vitalis/env`, `root:vitalis 640`.
+`deploy/instalar.sh` (usuário próprio, venv, testes, dois serviços systemd: site na porta 8502 e MCP na 8503, ambos só locais), `deploy/Caddyfile.bloco` (HTTPS automático e as duas rotas). A chave da IA nunca entra no repositório: fica num arquivo privado do servidor (`/etc/vitalis/env`), com permissão `640`, que só o administrador do servidor e o serviço da ferramenta conseguem ler.
 
 ## Estrutura
 
