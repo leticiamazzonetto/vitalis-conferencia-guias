@@ -94,7 +94,7 @@ Teste de ponta a ponta: `python -m unittest tests.test_mcp` sobe o servidor por 
 | Linguagem | Python 3, biblioteca padrão no núcleo | Uma regra é uma linha legível. Sem framework para explicar. |
 | Regras | `regras_convenio.json` é a fonte de verdade | Convênio novo = bloco novo no JSON, zero código. O limite de sessões digitado na guia só gera alerta se divergir. |
 | IA | Claude Haiku 4.5 via API, só na observação da recepção | Custa centavos (9 chamadas para 80 guias, com cache por texto). A IA marca caixinhas; a regra decide. Se a IA ficar indisponível (API fora do ar, chave inválida, sem crédito), a guia com observação não fica sem decisão: vai para CORRIGIR com o aviso "observação não lida pela IA (IA fora do ar no momento)", para leitura humana ou nova conferência quando a IA voltar. |
-| Site | Streamlit | Um arquivo, lido de cima para baixo. |
+| Site | Streamlit | Biblioteca Python que transforma um script em site: telas, filtros, tabelas, formulário e upload de CSV sem escrever HTML nem JavaScript. Como o motor já é Python, o site chama a mesma função sem tradução, e o código da interface cabe num arquivo que eu leio de cima para baixo e explico. |
 | Histórico | SQLite em arquivo | Um arquivo no próprio servidor, sem servidor de banco para instalar ou manter. Suficiente para 900 guias por mês. |
 | Hospedagem | Meu servidor (VPS) com Caddy e systemd | O site e o MCP rodam no meu servidor: o Caddy dá o endereço com HTTPS e o systemd mantém os dois serviços ligados. Assim o link fica sempre no ar e as guias importadas ficam guardadas. A chave da IA fica em `/etc/vitalis/env`, fora do repositório. |
 | MCP | SDK oficial `mcp` (2.x), stdio + HTTP | Mesma função do site. Publicado por HTTP para testar sem instalar. |
@@ -114,7 +114,7 @@ A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram 
 ### O que ficou de fora e por quê
 
 - **Validade máxima da autorização (30/45/60 dias)**: o CSV não tem a data de concessão. O Asafe (Expert Integrado) esclareceu que a verificação possível é validade contra a data do atendimento. Fica documentado, não implementado.
-- **Integração com a API do sistema de gestão**: não existe nesta prova. Entraria como um conector próprio: um script agendado que lê as guias novas pela API do sistema de gestão e as passa a `servico.verificar_guia`, o mesmo caminho que o CSV usa hoje. Não é o MCP: o MCP é a porta para assistentes de IA, não para o sistema de gestão.
+- **Integração com a API do sistema de gestão**: não existe nesta prova. Entraria como um conector próprio: um script agendado que lê as guias novas pela API do sistema de gestão e as passa a `servico.verificar_guia`, o mesmo caminho que o CSV usa hoje.
 - **Botão "marcar como corrigida"**: se o sistema de gestão tem API, quem sabe se a guia foi corrigida é ele, não um botão nosso. A guia corrigida é reconferida e vira OK.
 - **Feriados** no cálculo de dias úteis da autorização verbal.
 - **Inferência entre guias** (contar sessões de um paciente ao longo do mês): o Asafe orientou "confere o que a guia declara".
