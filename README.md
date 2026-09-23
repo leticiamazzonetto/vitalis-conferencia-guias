@@ -129,7 +129,7 @@ A IA gerou a maior parte do código. As decisões abaixo são minhas, e mudaram 
 
 ```bash
 python -m unittest discover -s tests     # testes automáticos: regras, sinais da IA (dublê), gabarito da amostra, MCP
-python verificar_lote.py [--com-ia]      # lote de agosto; --com-ia lê as observações com o Haiku
+python verificar_lote.py [--csv arquivo] [--com-ia]   # confere um CSV inteiro (padrão: a amostra de agosto); --com-ia liga a IA
 python gerar_relatorio.py                # docs/relatorio-semanal.md e .html
 ```
 Além dos testes: guia com data invertida, vírgula no valor e observação de protocolo verbal enviada pelo site público (formulário e CSV); cópia exata da G-0059 enviada como guia nova (tem de dar NÃO ENVIAR); reenvio do CSV das 80 guias reproduzindo o mesmo resultado do lote; reinício do serviço com as importações preservadas; MCP chamado por HTTPS de fora do servidor; Skill e MCP usados no Claude e no ChatGPT.
@@ -147,7 +147,8 @@ Além dos testes: guia com data invertida, vírgula no valor e observação de p
 ## Rodar localmente
 
 ```bash
-python -m venv .venv && .venv/Scripts/activate      # Windows; no Linux: source .venv/bin/activate
+python -m venv .venv
+.venv\Scriptsctivate                    # Windows (no PowerShell: .venv\Scripts\Activate.ps1); Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run app/app.py
 ```
