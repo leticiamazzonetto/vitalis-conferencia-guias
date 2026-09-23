@@ -164,7 +164,7 @@ normalizador.py       formato: datas BR, vírgula, campos vazios, chave de dupli
 observacao.py         IA (Haiku) → sinais; cache; falha → "não lida"
 motor.py              as regras; OK / CORRIGIR / NÃO ENVIAR
 servico.py            fonte única: consultar_regra + verificar_guia
-verificar_lote.py     lote das 80 + resumo
+verificar_lote.py     conferência em lote (um CSV inteiro) + resumo dos números
 gerar_relatorio.py    relatório semanal (md + html)
 app/app.py            site (Streamlit)  ·  app/armazenamento.py  histórico (SQLite)  ·  app/.streamlit/config.toml  tema
 mcp_server/server.py  MCP (stdio + HTTP)
