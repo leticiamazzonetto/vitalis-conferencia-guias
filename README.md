@@ -148,7 +148,7 @@ Além dos testes: guia com data invertida, vírgula no valor e observação de p
 
 ```bash
 python -m venv .venv
-.venv\Scriptsctivate                    # Windows (no PowerShell: .venv\Scripts\Activate.ps1); Linux/macOS: source .venv/bin/activate
+.venv\Scripts\activate                    # Windows (no PowerShell: .venv\Scripts\Activate.ps1); Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run app/app.py
 ```
