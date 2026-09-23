@@ -557,7 +557,7 @@ elif pagina == "Conferir guia":
                     bloco_erro_amigavel(exc)
 
         st.markdown("## Guias importadas neste site")
-        st.markdown("<p class='muted'>Guias que você importou pelo formulário, por texto ou por CSV. Elas fazem parte "
+        st.markdown("<p class='muted'>Guias que você importou pelo formulário ou por CSV. Elas fazem parte "
                     "do Painel, da Lista de correções e do Relatório junto com as 80 de agosto. Importar de novo uma guia "
                     "com o mesmo id substitui a decisão anterior.</p>", unsafe_allow_html=True)
         try:
